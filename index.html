@@ -1,0 +1,1382 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hmpf und das Kritzelherz</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Reenie+Beanie&display=swap">
+<style>
+/* Layout: eine Notizbuchseite (3:4) liegt auf Sofastoff; Bauch-Inventar daneben (breit) oder darunter (schmal).
+   Alles ist Kuli auf Papier. Das einzige Rot im Spiel ist Marmelade – und am Ende das Herz. */
+:root{
+  --desk:#27302f; --desk-2:#1f2726; --chalk:#e9e3d1; --chalk-dim:#aab2a8;
+  --paper:#efe8d3; --paper-2:#e0d6ba; --paper-3:#f5f0e2; --board:#cdc3a8; --rule:#9a98a8;
+  --ink:#25224f; --ink-deep:#17153b; --jam:#c8283d; --jam-deep:#8f1426;
+  --coffee:#8a6a4c; --band:#1d1b30; --band-hi:#55527a; --clip:#5d5b78; --crumb:#bdb6a6;
+  --hand:'Reenie Beanie','Bradley Hand','Segoe Print','Comic Sans MS',cursive;
+  --text:'Kalam','Segoe Print','Bradley Hand','Comic Sans MS',cursive;
+  color-scheme: dark;
+}
+[hidden]{display:none!important}
+.sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  margin:0; color:var(--chalk); font-family:var(--text); font-size:16px;
+  background-color:var(--desk);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.028) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.09) 0 2px, transparent 2px 4px);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:12px 28px;
+  -webkit-tap-highlight-color: transparent;
+}
+button{font:inherit}
+
+/* Kopfzeile */
+.bar{display:flex; align-items:center; gap:8px 14px; flex-wrap:wrap; max-width:900px; margin:0 auto 12px}
+.brand{font-family:var(--hand); font-size:2.1rem; line-height:.9; color:var(--chalk); margin:0; font-weight:400}
+.where{font-size:.95rem; color:var(--chalk-dim)}
+.tools{margin-left:auto; display:flex; gap:8px; flex-wrap:wrap}
+.btn{
+  font:700 .95rem/1 var(--text); color:var(--ink); background:var(--paper);
+  border:2px solid var(--ink); border-radius:255px 14px 225px 14px / 14px 225px 14px 255px;
+  padding:9px 13px 6px; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.35);
+  transition:transform .12s;
+}
+.btn:hover{transform:rotate(-1.5deg) translateY(-1px)}
+.btn:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.35)}
+.btn:focus-visible{outline:2px dashed var(--chalk); outline-offset:3px}
+.btn.big{font-size:1.15rem; padding:12px 18px 8px}
+.btn.sm{font-size:.85rem; padding:6px 10px 4px}
+
+/* Spielfläche */
+.play{display:flex; flex-direction:column; align-items:center; gap:16px}
+.stagewrap{width:min(100%, 600px, max(270px, calc((100vh - 250px) * .75))); width:min(100%, 600px, max(270px, calc((100dvh - 250px) * .75)))}
+.side{width:min(100%, 600px); display:grid; gap:14px; min-width:0}
+@media (min-width:880px){
+  .play{flex-direction:row; justify-content:center; align-items:flex-start; gap:24px}
+  .stagewrap{width:min(600px, max(330px, calc((100vh - 96px) * .75))); width:min(600px, max(330px, calc((100dvh - 96px) * .75)))}
+  .side{width:260px; position:sticky; top:12px}
+}
+.stage{position:relative; width:100%; aspect-ratio:3/4; container-type:inline-size}
+.stage::before{content:""; position:absolute; inset:8px 6px 0; border-radius:22px; box-shadow:0 18px 40px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.4); pointer-events:none}
+#svg{position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:manipulation; user-select:none; -webkit-user-select:none; overflow:visible}
+#scene,#avatar,#fx{pointer-events:none}
+.hs{fill:transparent; cursor:pointer; outline:none}
+.hs:focus-visible{stroke:var(--ink); stroke-width:2.5; stroke-dasharray:7 6}
+
+/* Tinte */
+.k{fill:none; stroke:var(--ink); stroke-width:var(--sw,2.3px); stroke-linecap:round; stroke-linejoin:round}
+.kt{fill:none; stroke:var(--ink); stroke-width:calc(var(--sw,2.3px) * .55); stroke-linecap:round; opacity:.9}
+.k2{fill:none; stroke:var(--ink-deep); stroke-width:calc(var(--sw,2.3px) * 1.35); stroke-linecap:round; stroke-linejoin:round}
+.fi{fill:var(--ink); stroke:none}
+.hand{font-family:var(--hand); fill:var(--ink)}
+.jam{fill:var(--jam); stroke:none}
+.jamk{fill:none; stroke:var(--jam); stroke-width:calc(var(--sw,2.3px) * 1.7); stroke-linecap:round; opacity:.9}
+.kaffee{fill:none; stroke:var(--coffee); stroke-width:3.2; opacity:.33}
+
+.herz.schlag{transform-box:fill-box; transform-origin:50% 50%; animation:schlag .9s ease-in-out infinite}
+@keyframes schlag{0%,100%{transform:scale(1)} 14%{transform:scale(1.13)} 28%{transform:scale(.97)} 42%{transform:scale(1.07)} 60%{transform:scale(1)}}
+.trense.fliegt{transform-box:fill-box; transform-origin:50% 50%; animation:fliegt 1.1s cubic-bezier(.3,.1,.6,1) forwards}
+@keyframes fliegt{0%{transform:translate(0,0) rotate(0)} 25%{transform:translate(30px,-60px) rotate(120deg)} 100%{transform:translate(330px,-540px) rotate(900deg); opacity:0}}
+.atmen{transform-box:fill-box; transform-origin:50% 100%; animation:atmen 2.8s ease-in-out infinite}
+@keyframes atmen{50%{transform:scale(1.012,1.024)}}
+.fxt{transform-box:fill-box; transform-origin:50% 50%; animation:auf .9s ease-out forwards}
+@keyframes auf{from{opacity:.95; transform:translateY(0)} to{opacity:0; transform:translateY(-26px)}}
+.bumsfx{transform-box:fill-box; transform-origin:50% 50%; animation:bumsfx 1.1s ease-out forwards}
+@keyframes bumsfx{0%{opacity:0; transform:scale(.6)} 20%{opacity:1; transform:scale(1.1)} 100%{opacity:0; transform:scale(1.4) translateY(-10px)}}
+
+/* Texte auf der Bühne */
+.cap{
+  position:absolute; left:3.5%; right:3.5%; top:3%; z-index:5;
+  background:var(--paper-3); color:var(--ink); border:2px solid var(--ink);
+  border-radius:18px 6px 16px 8px / 8px 16px 6px 18px;
+  padding:.55em .9em .7em; font-size:clamp(14px, 3.5cqw, 19px); line-height:1.38;
+  box-shadow:0 5px 0 rgba(37,34,79,.12), 0 10px 26px rgba(0,0,0,.28); cursor:pointer;
+}
+.cap.unten{top:auto; bottom:3%}
+.cap .who{display:block; font-size:.74em; font-weight:700; letter-spacing:.08em; text-transform:uppercase; opacity:.62; margin-bottom:.05em}
+.cap p{margin:0; text-wrap:pretty}
+.cap.think{border-style:dashed}
+.cap.think p{color:#3b3870}
+.cap.narr{background:var(--ink); color:var(--paper-3); border-color:var(--ink-deep)}
+.cap.hint{background:var(--paper); border-width:2px; border-style:dotted}
+.cap .more{position:absolute; right:.8em; bottom:.2em; font-size:.72em; opacity:.55}
+.bon{display:block; font-family:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace; font-size:.74em; line-height:1.5; margin:.45em 0; padding:.5em .7em; background:#fbf9f2; border:1px dashed rgba(37,34,79,.35); color:#3b3870; letter-spacing:.02em}
+.cap.narr .bon{color:var(--ink)}
+
+.opts{
+  position:absolute; left:3.5%; right:3.5%; bottom:3%; z-index:6; display:flex; flex-direction:column; gap:2px;
+  background:var(--paper-3); border:2px solid var(--ink); border-radius:16px 6px 18px 8px / 8px 18px 6px 16px; padding:.45em;
+  box-shadow:0 10px 26px rgba(0,0,0,.28);
+}
+.opt{text-align:left; font:400 clamp(14px, 3.4cqw, 18px)/1.3 var(--text); color:var(--ink); background:transparent; border:0; border-bottom:1px dashed rgba(37,34,79,.25); padding:.4em .45em .3em; cursor:pointer; border-radius:6px}
+.opt:last-child{border-bottom:0}
+.opt span{opacity:.6}
+.opt:hover,.opt:focus-visible{background:var(--ink); color:var(--paper-3); outline:none}
+
+.pop{
+  position:absolute; z-index:7; background:var(--paper-3); border:2px solid var(--ink);
+  border-radius:14px 5px 14px 6px / 6px 14px 5px 14px; padding:.3em; display:flex; flex-direction:column; gap:1px;
+  min-width:9.5em; box-shadow:0 10px 24px rgba(0,0,0,.3); font-size:clamp(14px, 3.3cqw, 17px);
+}
+.pop .t{font-weight:700; color:var(--ink); padding:.2em .5em .25em; border-bottom:1.5px solid var(--ink); margin-bottom:.15em}
+.pop button{font-family:var(--text); color:var(--ink); background:none; border:0; text-align:left; padding:.32em .55em .22em; border-radius:6px; cursor:pointer}
+.pop button:hover,.pop button:focus-visible{background:var(--ink); color:var(--paper-3); outline:none}
+
+.label{
+  position:absolute; top:2.4%; left:50%; transform:translateX(-50%); z-index:4;
+  background:var(--ink); color:var(--paper-3); font-size:clamp(13px, 3.1cqw, 16px);
+  padding:.25em .8em .1em; border-radius:999px; pointer-events:none; white-space:nowrap; max-width:92%; overflow:hidden; text-overflow:ellipsis;
+}
+.back{position:absolute; left:3%; top:2.6%; z-index:4}
+
+/* Seitenleiste */
+.goal{background:var(--paper); color:var(--ink); border-radius:3px; padding:12px 16px 10px; transform:rotate(-.7deg); box-shadow:0 6px 16px rgba(0,0,0,.38)}
+.goal h2,.inv h2{font-family:var(--hand); font-weight:400; font-size:1.9rem; margin:0; line-height:.95}
+.goal p{margin:.15em 0 0; line-height:1.35}
+.checks{list-style:none; display:flex; gap:6px 16px; flex-wrap:wrap; padding:0; margin:.45em 0 0}
+.checks li{display:flex; align-items:center; gap:6px}
+.checks svg{width:20px; height:20px; flex:none}
+.inv h2{color:var(--chalk); margin-bottom:6px}
+.inv h2 small{font-family:var(--text); font-size:.85rem; color:var(--chalk-dim)}
+.invlist{display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px}
+.item{
+  background:var(--paper); border:0; border-radius:3px; padding:6px 4px 5px; display:flex; flex-direction:column; align-items:center; gap:2px;
+  cursor:pointer; color:var(--ink); font:400 .8rem/1.15 var(--text); text-align:center;
+  box-shadow:0 3px 8px rgba(0,0,0,.38); transform:rotate(var(--r,0deg)); transition:transform .12s;
+}
+.item:hover{transform:rotate(0deg) translateY(-2px)}
+.item svg{width:50px; height:50px}
+.item.sel{background:var(--paper-3); outline:3px solid var(--chalk); outline-offset:2px; transform:rotate(0) translateY(-3px)}
+.item:focus-visible{outline:2px dashed var(--chalk); outline-offset:3px}
+.empty{grid-column:1 / -1; color:var(--chalk-dim); font-size:.95rem; margin:0}
+.invact{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px; color:var(--chalk)}
+.invact b{font-weight:700}
+
+/* Titel / Ende */
+.ov{
+  position:fixed; inset:0; z-index:50; overflow:auto; display:flex;
+  background-color:var(--desk);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.028) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.09) 0 2px, transparent 2px 4px);
+  padding:max(24px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.ovin{margin:auto; display:flex; flex-wrap:wrap; gap:28px 48px; align-items:center; justify-content:center; max-width:940px}
+.photo{margin:0; width:min(74vw, 320px); background:#fbfaf6; padding:10px 10px 0; transform:rotate(-3deg); box-shadow:0 18px 40px rgba(0,0,0,.55)}
+.photo img{display:block; width:100%; height:auto}
+.photo figcaption{font-family:var(--hand); color:var(--ink); font-size:1.5rem; text-align:center; padding:6px 0 8px}
+.titletext{flex:1 1 300px; max-width:32rem; min-width:0}
+.eyebrow{font-size:.85rem; letter-spacing:.12em; text-transform:uppercase; color:var(--chalk-dim); margin:0 0 .4em}
+.ov h1{font-family:var(--hand); font-weight:400; font-size:clamp(3.2rem, 10vw, 5.6rem); line-height:.86; margin:0; color:var(--chalk); text-wrap:balance}
+.ov h1 span{color:var(--jam)}
+.sub{font-size:1.1rem; line-height:1.45; color:var(--chalk); opacity:.86; max-width:36ch; margin:.8em 0 1.1em}
+.ovbtns{display:flex; gap:10px; flex-wrap:wrap}
+.how{list-style:none; padding:0; margin:1.4em 0 0; display:grid; gap:4px; font-size:.95rem; color:var(--chalk-dim)}
+.how li::before{content:"– "}
+
+@media (prefers-reduced-motion: reduce){
+  .herz.schlag,.atmen{animation:none}
+  .fxt,.bumsfx{animation-duration:.01s}
+  .btn,.item{transition:none}
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <p class="brand">Hmpf</p>
+  <span class="where" id="where">Seite 47</span>
+  <div class="tools">
+    <button type="button" class="btn sm" id="btnHint">Tipp</button>
+    <button type="button" class="btn sm" id="btnSound" aria-pressed="true">Ton: an</button>
+    <button type="button" class="btn sm" id="btnMenu">Menü</button>
+  </div>
+</header>
+
+<main class="play">
+  <div class="stagewrap">
+    <div class="stage" id="stage">
+      <svg id="svg" viewBox="0 0 600 800" role="application" aria-label="Spielszene">
+        <defs>
+          <filter id="boil0" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="1" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <filter id="boil1" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <filter id="boil2" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="23" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <filter id="grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="5"/><feColorMatrix type="matrix" values="0 0 0 0 .42  0 0 0 0 .36  0 0 0 0 .22  0 0 0 -.9 .52"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+          <linearGradient id="falzL" x1="0" x2="1"><stop offset="0" stop-color="#3a3320" stop-opacity=".34"/><stop offset=".35" stop-color="#3a3320" stop-opacity=".08"/><stop offset="1" stop-color="#3a3320" stop-opacity="0"/></linearGradient>
+          <linearGradient id="falzR" x1="1" x2="0"><stop offset="0" stop-color="#3a3320" stop-opacity=".34"/><stop offset=".35" stop-color="#3a3320" stop-opacity=".08"/><stop offset="1" stop-color="#3a3320" stop-opacity="0"/></linearGradient>
+        </defs>
+        <g id="scene"></g>
+        <g id="avatar"></g>
+        <g id="fx"></g>
+        <g id="hot"></g>
+      </svg>
+      <div class="label" id="label" hidden></div>
+      <button type="button" class="btn sm back" id="btnBack" hidden>← Zurück</button>
+      <div class="pop" id="pop" hidden></div>
+      <div class="cap" id="cap" hidden aria-live="polite"></div>
+      <div class="opts" id="opts" hidden></div>
+    </div>
+  </div>
+  <aside class="side">
+    <section class="goal" id="goal" aria-live="polite"></section>
+    <section class="inv">
+      <h2>Im Bauch <small>(Inventar)</small></h2>
+      <div class="invlist" id="inv"></div>
+      <div class="invact" id="invact" hidden></div>
+    </section>
+  </aside>
+</main>
+
+<div class="ov" id="title" role="dialog" aria-modal="true" aria-labelledby="ttl">
+  <div class="ovin">
+    <figure class="photo" id="photo">
+      <img id="photoImg" src="zeichnung.jpg" width="840" height="1120" alt="Kugelschreiberzeichnung im Notizbuch: eine Figur mit Haarbüschel, runder Brille, geschlossenen Augen und einer Trense im Mund. Darunter ein großer Bauch voller Zacken mit einem zugekritzelten Herz und dem Wort »bumsen«, signiert mit »ne«.">
+      <figcaption>Die Vorlage, von ne</figcaption>
+    </figure>
+    <div class="titletext">
+      <p class="eyebrow" id="ovEyebrow">Ein Point-and-Click-Abenteuer in Kugelschreiber</p>
+      <h1 id="ttl">Hmpf und das Kritzel<span>herz</span></h1>
+      <p class="sub" id="ovSub">Jemand hat Hmpfs Herz zugekritzelt. Hilf ihm, es wieder zum Schlagen zu bringen – mit einer alten Spirale, einem Esel im Eselsohr, einem Kassenbon und sehr viel Hüpfen.</p>
+      <div class="ovbtns">
+        <button type="button" class="btn big" id="btnNew">Neues Spiel</button>
+        <button type="button" class="btn big" id="btnCont" hidden>Weiterspielen</button>
+      </div>
+      <ul class="how" id="ovHow">
+        <li>Tippe auf Dinge: ansehen, nehmen, benutzen, reden.</li>
+        <li>Tippe auf Hmpf für die Nahaufnahme.</li>
+        <li>Gegenstände im Bauch auswählen und auf etwas anwenden.</li>
+        <li>Feststecken? Oben gibt’s einen Tipp.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const svg = $('#svg'), sceneEl = $('#scene'), avatarEl = $('#avatar'), fxEl = $('#fx'), hotEl = $('#hot');
+const stage = $('#stage'), capEl = $('#cap'), optsEl = $('#opts'), popEl = $('#pop'), labelEl = $('#label'), backBtn = $('#btnBack');
+const invEl = $('#inv'), invAct = $('#invact'), goalEl = $('#goal'), whereEl = $('#where'), ovEl = $('#title');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const AV = 0.47;
+const f1 = n => Math.round(n * 10) / 10;
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+/* ================= Kuli: Zufall und Striche ================= */
+function mulberry(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const seg = (p0, p1, p2, p3) => `C${f1(p1[0] + (p2[0] - p0[0]) / 6)} ${f1(p1[1] + (p2[1] - p0[1]) / 6)} ${f1(p2[0] - (p3[0] - p1[0]) / 6)} ${f1(p2[1] - (p3[1] - p1[1]) / 6)} ${f1(p2[0])} ${f1(p2[1])}`;
+function smooth(pts){
+  let d = `M${f1(pts[0][0])} ${f1(pts[0][1])}`;
+  for (let i = 0; i < pts.length - 1; i++) d += seg(pts[i - 1] || pts[i], pts[i], pts[i + 1], pts[i + 2] || pts[i + 1]);
+  return d;
+}
+function smoothClosed(pts){
+  const n = pts.length; let d = `M${f1(pts[0][0])} ${f1(pts[0][1])}`;
+  for (let i = 0; i < n; i++) d += seg(pts[(i - 1 + n) % n], pts[i], pts[(i + 1) % n], pts[(i + 2) % n]);
+  return d + 'Z';
+}
+const lin = pts => 'M' + pts.map(q => f1(q[0]) + ' ' + f1(q[1])).join('L');
+const heartX = t => 16 * Math.sin(t) ** 3;
+const heartY = t => 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+function heartFill(cx, cy, k){ const pts = []; for (let i = 0; i < 48; i++){ const t = i / 48 * Math.PI * 2; pts.push([cx + heartX(t) * k, cy - heartY(t) * k]); } return lin(pts) + 'Z'; }
+
+class Pen {
+  constructor(seed){ this.r = mulberry(seed); }
+  j(a){ return (this.r() * 2 - 1) * a; }
+  line(x1, y1, x2, y2, w = 1.2, passes = 1){
+    let d = '';
+    for (let p = 0; p < passes; p++){
+      const len = Math.hypot(x2 - x1, y2 - y1) || 1, nx = -(y2 - y1) / len, ny = (x2 - x1) / len, b = this.j(len * .025 + w);
+      d += smooth([[x1 + this.j(w), y1 + this.j(w)], [(x1 + x2) / 2 + nx * b, (y1 + y2) / 2 + ny * b], [x2 + this.j(w), y2 + this.j(w)]]);
+    }
+    return d;
+  }
+  ellipse(cx, cy, rx, ry, w = 1.2, passes = 2){
+    let d = '';
+    for (let p = 0; p < passes; p++){
+      const a0 = this.r() * Math.PI * 2, n = 16, sw = Math.PI * 2 * (1.04 + this.r() * .08), pts = [];
+      for (let i = 0; i <= n; i++){ const a = a0 + sw * i / n, k = 1 + this.j(.025); pts.push([cx + Math.cos(a) * rx * k + this.j(w * .5), cy + Math.sin(a) * ry * k + this.j(w * .5)]); }
+      d += smooth(pts);
+    }
+    return d;
+  }
+  poly(pts, w = 1.2, passes = 2){
+    let d = '';
+    for (let p = 0; p < passes; p++){
+      const q = pts.map(([x, y]) => [x + this.j(w), y + this.j(w)]), s = q[0], n = q[1];
+      q.push([s[0] + this.j(w), s[1] + this.j(w)], [s[0] + (n[0] - s[0]) * .3, s[1] + (n[1] - s[1]) * .3]);
+      d += smooth(q);
+    }
+    return d;
+  }
+  edges(pts, w = 1, passes = 1){
+    let d = ''; const n = pts.length;
+    for (let p = 0; p < passes; p++) for (let i = 0; i < n; i++){ const a = pts[i], b = pts[(i + 1) % n]; d += this.line(a[0], a[1], b[0], b[1], w); }
+    return d;
+  }
+  zig(x1, y1, x2, y2, amp, n, w = 1){
+    const len = Math.hypot(x2 - x1, y2 - y1) || 1, nx = -(y2 - y1) / len, ny = (x2 - x1) / len, pts = [];
+    for (let i = 0; i <= n; i++){ const t = i / n, s = (i % 2 ? 1 : -1) * amp * (.75 + this.r() * .5); pts.push([x1 + (x2 - x1) * t + nx * s + this.j(w), y1 + (y2 - y1) * t + ny * s + this.j(w)]); }
+    return lin(pts);
+  }
+  scribble(cx, cy, rx, ry, n){
+    const pts = []; let a = this.r() * 6;
+    for (let i = 0; i < n; i++){ a += .7 + this.r() * 1.1; const k = .25 + this.r() * .75; pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k + this.j(ry * .15)]); }
+    return smooth(pts);
+  }
+  scratch(x1, x2, y1, y2, n){ const pts = []; for (let i = 0; i < n; i++) pts.push([(i % 2 ? x2 : x1) + this.j(16), y1 + (y2 - y1) * i / (n - 1) + this.j(4)]); return smooth(pts); }
+  spiral(cx, cy, r0, r1, turns){
+    const pts = [], n = Math.round(turns * 14);
+    for (let i = 0; i <= n; i++){ const t = i / n, a = t * turns * Math.PI * 2, r = r0 + (r1 - r0) * t; pts.push([cx + Math.cos(a) * r + this.j(.8), cy + Math.sin(a) * r * .92 + this.j(.8)]); }
+    return smooth(pts);
+  }
+  heart(cx, cy, k, w = 1.2, passes = 2){
+    let d = '';
+    for (let p = 0; p < passes; p++){
+      const pts = [];
+      for (let i = 0; i <= 30; i++){ const t = i / 30 * Math.PI * 2 * 1.04; pts.push([cx + heartX(t) * k + this.j(w), cy - heartY(t) * k + this.j(w)]); }
+      d += smooth(pts);
+    }
+    return d;
+  }
+  blob(cx, cy, rx, ry, v = .2, n = 12){
+    const pts = [], a0 = this.r() * 6;
+    for (let i = 0; i < n; i++){ const a = a0 + i / n * Math.PI * 2, k = 1 - v + this.r() * v * 2; pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]); }
+    return smoothClosed(pts);
+  }
+}
+
+const P = (d, c = 'k') => `<path class="${c}" d="${d}"/>`;
+const T = (s, x, y, size, rot = 0, extra = '') => `<text class="hand" x="${x}" y="${y}" font-size="${size}"${rot ? ` transform="rotate(${rot} ${x} ${y})"` : ''}${extra}>${s}</text>`;
+let boilI = 0;
+const inkG = s => `<g class="ink" filter="url(#boil${boilI})">${s}</g>`;
+
+/* ================= Hmpf, gezeichnet ================= */
+const BODY = [[200,312],[262,314],[322,326],[358,352],[376,396],[382,452],[374,502],[354,532],[361,566],[366,602],[350,628],[300,636],[200,638],[100,636],[50,628],[34,602],[39,566],[46,532],[26,502],[18,452],[24,396],[42,352],[78,326],[138,314]];
+const hmpfCache = new Map();
+function hmpfSVG(F){
+  const key = JSON.stringify(F);
+  if (hmpfCache.has(key)) return hmpfCache.get(key);
+  const K = [], KT = [], FI = []; let p;
+  // Haare und Wirbel
+  p = new Pen(11);
+  for (let i = 0; i < 46; i++){
+    const t = i / 45, a = Math.PI * (-.8 + .6 * t) + p.j(.03), x = 200 + Math.cos(a) * 98, y = 178 + Math.sin(a) * 102;
+    KT.push(p.line(x, y, x + 10 + t * 30 + p.j(9) + (x - 200) * .2, y - 30 - p.r() * 42 + Math.abs(x - 200) * .1, 1.2));
+  }
+  for (let i = 0; i < 7; i++){ const a = i / 7 * Math.PI * 2 + p.j(.25); KT.push(p.line(176, 46, 176 + Math.cos(a) * 15, 46 + Math.sin(a) * 12, .5)); }
+  // Kopf, Stirn
+  p = new Pen(12);
+  K.push(p.ellipse(200, 178, 108, 112, 1.6, 2), p.line(170, 104, 232, 101, 1));
+  // Augenbrauen
+  p = new Pen(13);
+  for (const [cx, a0, a1] of [[150, -160, -48], [250, -132, -20]]){
+    for (let i = 0; i < 24; i++){
+      const a = (a0 + (a1 - a0) * i / 23) * Math.PI / 180, r = 50 + p.j(2), x = cx + Math.cos(a) * r, y = 186 + Math.sin(a) * r * .9, L = 9 + p.r() * 9, tl = a + p.j(.25);
+      KT.push(p.line(x, y, x + Math.cos(tl) * L, y + Math.sin(tl) * L, .4));
+    }
+  }
+  // Brille und Augen
+  p = new Pen(14);
+  for (const cx of [150, 250]){
+    K.push(p.ellipse(cx, 186, 37, 35, 1.1, 2)); KT.push(p.ellipse(cx, 186, 30, 28, .8, 1));
+    for (let i = 0; i < 40; i++){
+      const a = p.r() * Math.PI * 2, r0 = 19 + p.r() * 6, r1 = 28 + p.r() * 2;
+      KT.push(p.line(cx + Math.cos(a) * r0, 186 + Math.sin(a) * r0 * .95, cx + Math.cos(a + .08) * r1, 186 + Math.sin(a + .08) * r1 * .95, .3));
+    }
+    if (F.eyes) FI.push(`M${cx - 5.5} 187a5.5 5.5 0 1 0 11 0a5.5 5.5 0 1 0 -11 0Z`);
+    else K.push(p.line(cx - 12, 189, cx + 12, 188, .5));
+  }
+  K.push('M187 182Q200 171 213 182', p.line(113, 184, 95, 177, .5), p.line(287, 184, 305, 177, .5));
+  // Ohren
+  K.push('M98 160C74 154 70 210 98 214', 'M302 160C326 154 330 210 302 214');
+  KT.push('M91 172C82 180 85 198 93 202', 'M309 172C318 180 315 198 307 202');
+  // Wangenschatten, Nase, Lippen, Kinn
+  p = new Pen(15);
+  for (const [x0, x1] of [[112, 142], [258, 288]]) for (let i = 0; i < 16; i++){ const x = x0 + p.r() * (x1 - x0), y = 216 + p.r() * 34; KT.push(p.line(x, y, x + 12, y - 11, .4)); }
+  K.push('M190 214C194 222 206 222 210 214');
+  K.push('M170 247C178 232 192 232 200 240C208 232 222 232 230 247C214 253 186 253 170 247Z', 'M173 252C182 274 218 274 227 252', 'M174 248C190 252 210 252 226 248');
+  K.push('M183 282C182 304 218 304 217 282');
+  for (let i = 0; i < 7; i++){ const x = 192 + i * 2.6; KT.push(p.line(x, 294, x + p.j(2), 306 + p.r() * 5, .3)); }
+  // Bauch und Zacken
+  p = new Pen(16); K.push(p.poly(BODY, 1.6, 2));
+  p = new Pen(17); K.push(p.zig(130, 336, 270, 334, 8, 12, 1));
+  p = new Pen(18);
+  if (F.zacke) K.push(p.zig(64, 364, 168, 363, 13, 7, 1), p.zig(236, 363, 336, 362, 13, 7, 1));
+  else K.push(p.zig(64, 364, 336, 362, 13, 18, 1));
+  p = new Pen(19); K.push(p.zig(44, 392, 52, 524, 10, 9, 1), p.zig(356, 392, 348, 524, 10, 9, 1), p.zig(76, 556, 324, 556, 10, 16, 1));
+  // Herz
+  const H = []; p = new Pen(20);
+  if (F.knot){
+    H.push(P(p.heart(200, 448, 5.4, 1, 1), 'kt'), P(p.scribble(200, 444, 98, 64, 130), 'k2'), P(p.scratch(104, 296, 396, 504, 30), 'k2'));
+    const L = [];
+    for (let i = 0; i < 8; i++){ const x = 134 + i * 19; L.push([x, 522], [x + 9, 508], [x + 15, 496], [x + 11, 490], [x + 6, 497], [x + 9, 512], [x + 17, 523]); }
+    L.push([300, 530], [310, 542], [302, 548]);
+    H.push(P(smooth(L), 'k'));
+  } else {
+    if (F.red){
+      H.push(`<path class="jam" d="${heartFill(203, 451, 5.25)}"/>`);
+      const R = []; for (const k of [4.3, 3.4, 2.5, 1.6, .8]) R.push(p.heart(201, 448, k, 1.6, 1));
+      H.push(P(R.join(''), 'jamk'));
+    }
+    H.push(P(p.heart(200, 448, 5.4, 1.2, 2), 'k'));
+    if (F.takt) H.push(P('M110 450H150L158 442L166 450H182L190 464L200 394L210 482L218 450H240L250 439L262 450H292', 'k'));
+  }
+  // Trense
+  let tr = '';
+  if (F.trense){ const q = new Pen(21); tr = `<g class="trense"><path class="k" d="${q.line(128, 249, 272, 249, .8, 2)}${q.ellipse(120, 249, 8, 8, .6, 2)}${q.ellipse(280, 249, 8, 8, .6, 2)}"/></g>`; }
+  p = new Pen(22); K.push(p.ellipse(334, 626, 17, 15, .8, 1));
+  const out = P(KT.join(''), 'kt') + P(K.join(''), 'k') + (FI.length ? `<path class="fi" d="${FI.join('')}"/>` : '') +
+    `<g class="herz${F.beat ? ' schlag' : ''}">${H.join('')}</g>` + tr +
+    T('bumsen', 200, 616, 60, -2, ' text-anchor="middle"') + T('ne', 334, 633, 24, 0, ' text-anchor="middle"');
+  hmpfCache.set(key, out);
+  return out;
+}
+
+/* ================= Papier ================= */
+function pageSVG(side, fold){
+  const r = side === 'r';
+  const d = r ? (fold ? 'M0 0H578Q600 0 600 22V655L455 800H0Z' : 'M0 0H578Q600 0 600 22V778Q600 800 578 800H0Z')
+              : (fold ? 'M22 0H600V800H145L0 655V22Q0 0 22 0Z' : 'M22 0H600V800H22Q0 800 0 778V22Q0 0 22 0Z');
+  let s = '';
+  if (fold) s += `<path d="${r ? 'M455 800L600 655V778Q600 800 578 800Z' : 'M145 800L0 655V778Q0 800 22 800Z'}" fill="var(--paper-3)"/>`;
+  s += `<clipPath id="pgclip"><path d="${d}"/></clipPath><path d="${d}" fill="var(--paper)"/><path d="${d}" fill="#fff" filter="url(#grain)"/>`;
+  let L = ''; for (let y = 96; y < 790; y += 32) L += `M0 ${y}H600`;
+  s += `<path d="${L}" clip-path="url(#pgclip)" fill="none" stroke="var(--rule)" stroke-width="1.7" stroke-dasharray="0.1 5.4" stroke-linecap="round" opacity=".75"/>`;
+  s += r ? '<rect x="0" y="0" width="70" height="800" fill="url(#falzL)"/>' : '<rect x="530" y="0" width="70" height="800" fill="url(#falzR)"/>';
+  return s;
+}
+
+/* ================= Nebenfiguren & Dinge ================= */
+function eselSVG(fed){
+  const p = new Pen(3101), K = [], KT = [], FI = [];
+  const head = [[514,716],[504,744],[508,774],[520,798],[586,798],[595,772],[593,738],[581,712],[548,700]];
+  const ear = [[572,716],[579,684],[589,650],[597,628],[601,662],[594,696],[586,718]];
+  let s = `<path d="${smoothClosed(ear)}" fill="var(--paper-3)"/><path d="${smoothClosed(head)}" fill="var(--paper-3)"/>`;
+  K.push(p.poly(ear, .8, 1), p.poly(head, 1, 2), p.ellipse(548, 782, 30, 13, .7, 1));
+  KT.push('M486 786C478 746 470 706 462 670', 'M583 704C586 680 591 656 595 640');
+  FI.push('M535 781a3 2 0 1 0 6 0a3 2 0 1 0 -6 0Z', 'M555 781a3 2 0 1 0 6 0a3 2 0 1 0 -6 0Z');
+  if (fed) K.push('M524 744Q532 736 540 744', 'M558 742Q566 734 574 742');
+  else { FI.push('M527.5 743a4.5 5 0 1 0 9 0a4.5 5 0 1 0 -9 0Z', 'M561.5 741a4.5 5 0 1 0 9 0a4.5 5 0 1 0 -9 0Z'); K.push(p.line(522, 733, 541, 731, .4), p.line(556, 729, 575, 731, .4)); }
+  for (let i = 0; i < 6; i++) KT.push(p.line(536 + i * 5, 708, 532 + i * 6, 690 - p.r() * 10, .5));
+  s += P(KT.join(''), 'kt') + P(K.join(''), 'k') + `<path class="fi" d="${FI.join('')}"/>`;
+  if (fed) s += T('mampf', 484, 690, 30, -14);
+  return s;
+}
+function gerdaSVG(){
+  const p = new Pen(4601), K = [];
+  let s = '<circle cx="458" cy="442" r="37" fill="var(--paper-3)"/><path d="M396 478C384 470 385 452 397 446C405 443 411 452 410 464C430 470 490 468 510 476C488 490 420 490 396 478Z" fill="var(--paper-3)"/>';
+  K.push(p.spiral(458, 442, 2, 35, 3.2), p.ellipse(458, 442, 38, 35, .8, 1));
+  K.push('M396 478C420 490 488 490 510 476C496 470 470 470 452 476', 'M396 478C384 470 385 452 397 446C405 443 411 452 410 464');
+  K.push(p.line(395, 448, 383, 418, .5), p.line(404, 446, 410, 413, .5), 'M391 462Q396 467 401 462');
+  s += P(K.join('')) + '<circle class="fi" cx="383" cy="416" r="3.6"/><circle class="fi" cx="410" cy="411" r="3.6"/>';
+  return s;
+}
+function jamSVG(given){
+  const p = new Pen(4602), rx = given ? 34 : 48, ry = given ? 18 : 24;
+  return `<path class="jam" d="${p.blob(350, 474, rx, ry, .18)}"/><ellipse cx="338" cy="466" rx="9" ry="3.5" fill="#fff" opacity=".35" transform="rotate(-12 338 466)"/><circle class="jam" cx="${given ? 382 : 396}" cy="490" r="5"/>`;
+}
+function kleckSVG(){
+  const p = new Pen(4603); let s = `<path class="fi" d="${p.blob(482, 662, 22, 18, .25)}"/>`;
+  for (let i = 0; i < 7; i++){ const a = p.r() * Math.PI * 2, r = 30 + p.r() * 16; s += `<circle class="fi" cx="${f1(482 + Math.cos(a) * r)}" cy="${f1(662 + Math.sin(a) * r)}" r="${f1(1.6 + p.r() * 2.6)}"/>`; }
+  return s;
+}
+function kuliSVG(){
+  const p = new Pen(4801), K = [], KT = [];
+  K.push(p.edges([[0,-17],[380,-17],[380,17],[0,17]], .8, 2), p.edges([[380,-17],[440,-3],[447,0],[440,3],[380,17]], .6, 1), p.edges([[-34,-11],[0,-11],[0,11],[-34,11]], .6, 2), p.edges([[18,-17],[18,-30],[168,-30],[178,-23],[168,-17]], .5, 1));
+  for (let i = 0; i < 8; i++) KT.push(p.line(300 + i * 8, -16, 300 + i * 8, 16, .3));
+  for (let i = 0; i < 28; i++){ const x = 8 + i * 13; KT.push(p.line(x, 9, x + 7, 16, .3)); }
+  return `<g transform="translate(70 214) rotate(-12)"><path d="M0 -17H380L447 0L380 17H0Z" fill="var(--paper-3)"/><path d="M-34 -11H0V11H-34Z" fill="var(--paper-3)"/>${P(KT.join(''), 'kt')}${P(K.join(''))}<circle class="fi" cx="447" cy="0" r="2.6"/>${T('KULI', 196, 8, 26, 0, ' letter-spacing="3"')}</g>`;
+}
+const KULI_POLY = (() => { const a = -12 * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [[-38,-34],[452,-34],[452,22],[-38,22]].map(([x, y]) => `${f1(70 + x * c - y * s)},${f1(214 + x * s + y * c)}`).join(' '); })();
+function kruemelSVG(){
+  const p = new Pen(4802); let s = '';
+  for (const [x, y, r] of [[396,632,20],[420,650,-30],[446,628,60],[430,612,10],[408,662,-60],[452,656,35]])
+    s += `<path class="k" style="fill:var(--crumb)" d="${p.ellipse(x, y, 8, 3.6, .4, 1)}" transform="rotate(${r} ${x} ${y})"/>`;
+  return s;
+}
+
+/* ================= Zustand ================= */
+const fresh = () => ({ scene: 's47', prev: 's47', inv: [], f: { seen: {} }, sel: null, sound: true });
+let S = fresh();
+let ax = 230, ay = 0, squash = 1;
+const has = id => S.inv.includes(id);
+function give(id){ if (!has(id)) S.inv.push(id); sfx.pick(); renderInv(); }
+function drop(id){ S.inv = S.inv.filter(x => x !== id); if (S.sel === id) S.sel = null; renderInv(); }
+const hf = () => ({ knot: !S.f.platz, red: !!S.f.farbe, takt: !!S.f.takt, trense: !S.f.trenseWeg, eyes: !!S.f.augen, zacke: !!S.f.zacke, beat: !!S.f.won });
+
+/* ================= Ton ================= */
+const sfx = (() => {
+  let ac = null;
+  const ctx = () => {
+    if (!S.sound) return null;
+    if (!ac){ try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+    if (ac.state === 'suspended') ac.resume();
+    return ac;
+  };
+  const env = (g, t, a, peak, d) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d); };
+  function tone(type, f0, fEnd, dur, vol, lp){
+    const c = ctx(); if (!c) return;
+    const t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(fEnd, t + dur);
+    let n = o; if (lp){ const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = lp; o.connect(fl); n = fl; }
+    n.connect(g); g.connect(c.destination); env(g, t, .012, vol, dur); o.start(t); o.stop(t + dur + .05);
+  }
+  function noise(dur, vol, freq, q = 1){
+    const c = ctx(); if (!c) return;
+    const t = c.currentTime, len = Math.max(1, Math.floor(c.sampleRate * dur)), b = c.createBuffer(1, len, c.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = b; fl.type = 'bandpass'; fl.frequency.value = freq; fl.Q.value = q;
+    s.connect(fl); fl.connect(g); g.connect(c.destination); env(g, t, .015, vol, dur); s.start(t);
+  }
+  return {
+    unlock: ctx,
+    thump(){ tone('sine', 140, 45, .16, .35); },
+    hmpf(){ tone('sawtooth', 140 + Math.random() * 40, 105, .26, .11, 520); setTimeout(() => noise(.08, .07, 900, .8), 180); },
+    voice(){ tone('triangle', 260, 330, .14, .1); setTimeout(() => tone('triangle', 300, 240, .16, .08), 130); },
+    Esel(){ tone('square', 720, 690, .17, .04, 1800); setTimeout(() => tone('square', 430, 400, .28, .04, 1400), 190); },
+    Gerda(){ tone('sine', 520, 640, .18, .06); setTimeout(() => tone('sine', 600, 470, .2, .05), 140); },
+    Summlinie(){ tone('sine', 180, 175, .7, .08); },
+    pick(){ tone('triangle', 500, 900, .1, .14); },
+    page(){ noise(.26, .1, 2400, .6); },
+    scribble(){ for (let i = 0; i < 7; i++) setTimeout(() => noise(.07, .07, 2800 + Math.random() * 1600, 2), i * 85); },
+    beat(){ tone('sine', 92, 40, .14, .5); setTimeout(() => tone('sine', 80, 38, .16, .4), 170); },
+    boing(){ tone('sine', 200, 540, .3, .16); },
+    click(){ noise(.03, .22, 4200, 3); }
+  };
+})();
+
+/* ================= Texte & Dialoge ================= */
+let pending = null, busy = false;
+function caption(kind, who, html){
+  return new Promise(res => {
+    hidePop();
+    capEl.className = 'cap ' + kind + (S.scene === 'nah' ? ' unten' : '');
+    capEl.innerHTML = (who ? `<b class="who">${who}</b>` : '') + `<p>${html}</p><span class="more" aria-hidden="true">weiter ▸</span>`;
+    capEl.hidden = false; labelEl.hidden = true;
+    const t0 = performance.now();
+    pending = () => { if (performance.now() - t0 < 200) return; capEl.hidden = true; pending = null; res(); };
+  });
+}
+const think = t => caption('think', 'Hmpf denkt', t);
+const narr = t => caption('narr', '', t);
+const hint = t => caption('hint', 'Tipp', t);
+const hm = t => { sfx.hmpf(); return caption('say', 'Hmpf', `»${t}«`); };
+const say = t => { sfx.voice(); return caption('say', 'Hmpf', `»${t}«`); };
+const npc = (who, t) => { sfx[who] && sfx[who](); return caption('npc', who, t); };
+function choose(opts){
+  return new Promise(res => {
+    optsEl.innerHTML = '';
+    for (const o of opts){
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt'; b.innerHTML = o.label;
+      b.addEventListener('click', e => { e.stopPropagation(); optsEl.hidden = true; res(o.key); });
+      optsEl.append(b);
+    }
+    optsEl.hidden = false;
+    optsEl.querySelector('button').focus({ preventScroll: true });
+  });
+}
+const NOPE_TAKE = ['Hmpf. (Das bleibt hier.)', 'Nö. Das gehört zur Seite.', 'Wenn ich das mitnehme, fehlt hier was. ne würde es merken.'];
+const NOPE_USE = ['Da passiert nichts.', 'Ich wüsste nicht, wie. Ohne Arme schon gar nicht.', 'Hmpf. Nein.'];
+const NOPE_ITEM = ['Das passt nicht zusammen.', 'Selbst in einem Notizbuch hat Logik Grenzen.', 'Interessante Idee. Falsche Idee.', 'Hmpf. (Nein.)'];
+const NOPE_TALK = ['Keine Antwort. Wie erwartet.', 'Das Ding redet nicht. Ich übrigens auch nicht richtig.'];
+
+async function firstTake(){
+  if (S.f.armJoke) return;
+  S.f.armJoke = true;
+  await think('Moment. Ich hab gar keine Arme. Wie nehme ich eigentlich Sachen? … Egal. Es klappt. Ab in den Bauch.');
+}
+
+/* ================= Gegenstände ================= */
+const ITEM = {
+  moehren: { name: 'Wort »Möhren«', look: 'Das Wort »Möhren«, frisch von der Einkaufsliste gepflückt. Knackig, für ein Wort.' },
+  kruemel: { name: 'Radierkrümel', look: 'Radiergummikrümel. Gegen Kuli völlig machtlos. Aber sie geben sich Mühe.' },
+  bleistift: { name: 'Bleistiftstummel', look: 'Ein Bleistiftstummel. Kurz, rund, geduldig. Da könnte man gut etwas drumwickeln.' },
+  bon: { name: 'Kassenbon', look: 'Ein Kassenbon:<span class="bon">SCHREIBWAREN KESSLER<br>1 Notizbuch ....... 21,95<br>1 Kuli blau ........ 1,49<br>1 Herz ..... nicht vorrätig<br>SUMME ............. 23,44</span>Nicht vorrätig. Na toll.' },
+  klammer: { name: 'Büroklammer', look: 'Eine Büroklammer. Gut zum Hebeln, Stochern und für alles, wofür sie eigentlich nicht gemacht ist.' },
+  summ: { name: 'Summlinie', look: '»Mmmmmmmm.« Sie summt leise vor sich hin. Weich und rund. Schön, aber ohne Zacken.' },
+  zacke: { name: 'Zacke', look: 'Eine Zacke aus meinem Bauch. Spitz und ein bisschen beleidigt.' },
+  puls: { name: 'Herzschlaglinie', look: 'Mm-mm-ZACK-mm. Sieht aus wie im Krankenhausfernsehen. Fehlt nur das Piepen.' },
+  marmelade: { name: 'Klecks Erdbeer', look: 'Ein Klecks Erdbeermarmelade. Das einzige Rot im ganzen Notizbuch.' }
+};
+const ICON = {
+  moehren: () => T('Möhren', 30, 38, 25, -8, ' text-anchor="middle"'),
+  kruemel: () => { const p = new Pen(91); return [[18,34],[32,26],[42,40],[26,45]].map(([x, y]) => `<path class="k" style="fill:var(--crumb)" d="${p.ellipse(x, y, 7, 3.5, .4, 1)}"/>`).join(''); },
+  bleistift: () => '<g transform="rotate(35 30 30)"><path d="M24 20H36V54H24Z" style="fill:var(--paper-3)" class="k"/><path class="k" d="M24 20L30 5L36 20"/><path class="fi" d="M28 10L30 5L32 10Z"/><path class="kt" d="M28 21V53M32 21V53"/></g>',
+  bon: () => '<path class="k" style="fill:#faf7ee" d="M18 6H42V50L38 54L34 50L30 54L26 50L22 54L18 50Z"/><path class="kt" d="M22 15H38M22 21H33M22 27H37M22 33H30M22 42H38"/>',
+  klammer: () => '<path d="M24 47V17a7 7 0 0 1 14 0v32a5 5 0 0 1 -10 0V21" fill="none" stroke="var(--clip)" stroke-width="3" stroke-linecap="round"/>',
+  summ: () => T('mmmm', 30, 40, 38, -4, ' text-anchor="middle"'),
+  zacke: () => '<path class="k" d="M6 42H22L30 10L38 42H54"/>',
+  puls: () => '<path class="k" d="M3 34H15L19 30L23 34H27L31 46L37 8L43 50L47 34H57"/>',
+  marmelade: () => '<path class="jam" d="M14 32C12 22 26 16 34 20C44 16 52 26 46 34C50 44 36 48 30 44C20 48 12 42 14 32Z"/><ellipse cx="26" cy="27" rx="6" ry="2.4" fill="#fff" opacity=".4"/>'
+};
+
+/* ================= Herz-Logik ================= */
+async function wickeln(){
+  sfx.scribble();
+  await narr('Hmpf fischt das lose Ende ganz unten aus dem Knäuel, klemmt es an den Bleistiftstummel und hüpft im Kreis.');
+  for (let i = 0; i < 3; i++){ sfx.thump(); await wait(220); }
+  S.f.platz = true; drop('bleistift'); render();
+  await narr('Bums. Bums. Bums. Zwanzig Runden später ist das ganze Gekritzel aufgewickelt. Den Bleistift samt Knäuel kickt Hmpf in die Ecke.');
+  await think('Da ist es! Mein Herz. Ein leerer Umriss. Es tut nichts, aber es hat wieder Platz.');
+}
+async function faerben(){
+  drop('marmelade'); S.f.farbe = true; render();
+  await narr('Hmpf streicht den Klecks Erdbeer ins Herz. Es wird rot. Das einzige Rot im ganzen Notizbuch, und es gehört ihm.');
+  if (!S.f.takt) await think('Rot. Hübsch. Aber still.');
+}
+async function takten(){
+  drop('puls'); S.f.takt = true; render();
+  await narr('Hmpf legt die Herzschlaglinie quer übers Herz. Hmm-hmm-ZACK-hmm.');
+  if (!S.f.farbe) await think('Es zuckt. Aber es ist so blass. Gerda hat was von Farbe gesagt.');
+}
+async function herzItem(it){
+  const f = S.f;
+  if (f.won){ await think('Alles gut. Das Herz bumst. Nichts mehr dranbasteln.'); return true; }
+  switch (it){
+    case 'bleistift': if (f.platz) return false; await wickeln(); break;
+    case 'kruemel': await narr(f.platz ? 'Bloß nicht radieren. Hmpf ist froh, dass da wieder was ist.' : 'Hmpf radiert mit den Krümeln am Knäuel herum. Das Knäuel lacht ihn aus. Kuli radiert man nicht.'); break;
+    case 'marmelade': if (!f.platz){ await think('Marmelade auf ein Knäuel? Das wird nur klebrig. Erst muss das Gekritzel weg.'); break; } await faerben(); break;
+    case 'summ': if (!f.platz){ await think('Erst muss das Knäuel weg. Da drin hört man nichts.'); break; } await think('Das Herz summt mit. Mmmmm. Schön. Aber Summen ist noch kein Herzschlag. Da fehlen Zacken.'); break;
+    case 'zacke': await think('Eine Zacke allein ist noch kein Rhythmus. Die braucht etwas, woran sie hängen kann.'); break;
+    case 'puls': if (!f.platz){ await think('Erst muss das Knäuel weg.'); break; } await takten(); break;
+    case 'moehren': await think('Möhren sind gut für die Augen. Fürs Herz eher nicht.'); break;
+    case 'klammer': await think(f.platz ? 'Eine Büroklammer im Herz? Nein danke.' : 'Mit der Büroklammer im Knäuel rumstochern? Das macht es nur noch knotiger.'); break;
+    case 'bon': await think('»1 Herz: nicht vorrätig.« Ja, danke. Weiß ich.'); break;
+    default: return false;
+  }
+  if (S.f.platz && S.f.farbe && S.f.takt && !S.f.won) await ending();
+  return true;
+}
+
+let beatT = null, beatSound = false;
+function startBeat(){
+  stopBeat(); beatSound = true;
+  beatT = setInterval(() => {
+    if (S.scene !== 'nah' || !ovEl.hidden && !beatSound) return;
+    if (beatSound) sfx.beat();
+    fxText('bums', 300 + Math.random() * 260 - 130, 545 + Math.random() * 140 - 70, 30 + Math.random() * 16, 'bumsfx');
+  }, 900);
+}
+function stopBeat(){ clearInterval(beatT); beatT = null; beatSound = false; }
+
+async function ending(){
+  S.f.won = true;
+  if (S.scene !== 'nah'){ S.prev = S.scene; S.scene = 'nah'; }
+  render(); save();
+  await narr('Platz. Farbe. Takt.');
+  startBeat();
+  await narr('Das Herz zuckt. Einmal. Zweimal. Dann geht es los: <b>bums</b>. <b>bums</b>. <b>bums</b>.');
+  const tr = sceneEl.querySelector('.trense');
+  if (tr && !reduced){ tr.classList.add('fliegt'); sfx.boing(); await wait(1100); }
+  S.f.trenseWeg = true; render();
+  await narr('Bei jedem Schlag ruckelt es an der Trense. Bums. Bums. BUMS! Die Trense fliegt in hohem Bogen über den Seitenrand.');
+  S.f.augen = true; render();
+  await narr('Und zum ersten Mal macht Hmpf die Augen auf.');
+  await say('Ich … ich kann reden!');
+  await npc('Gerda', '(ganz leise, von Seite 46) Er redet!');
+  await npc('Esel', 'I-A. Na endlich. Und? Was steht da auf deinem Bauch?');
+  await say('Da steht, was mein Herz jetzt macht.');
+  await say('Bums. Bums. Bums.');
+  save();
+  beatSound = false;
+  showOverlay('end');
+}
+
+/* ================= Szenen ================= */
+const TR = (x, y, w, h) => [f1(80 + x * 1.1), f1(54 + y * 1.1), f1(w * 1.1), f1(h * 1.1)];
+const SC = {};
+
+SC.s47 = {
+  title: 'Seite 47', base: 705, minX: 100, maxX: 400, order: 47, enter: { s46: 110, s48: 395 },
+  draw(){
+    const f = S.f, p = new Pen(4701);
+    let ink = T('Sa, 7.11.', 62, 84, 38, -3) + T('47', 548, 64, 30);
+    let st = ''; for (let i = 0; i < 5; i++){ const a = i / 5 * Math.PI * 2 - Math.PI / 2; st += p.line(330, 160, 330 + Math.cos(a) * 16, 160 + Math.sin(a) * 16, .5); }
+    ink += P(st);
+    ink += `<path class="kaffee" d="${p.ellipse(150, 250, 64, 60, 1.2, 1)}"/><path class="kaffee" d="${p.ellipse(152, 252, 57, 54, 1.4, 1)}" opacity=".5"/>`;
+    ink += P(p.line(392, 618, 598, 566, 1.2, 1));
+    ink += f.summ ? `<g opacity=".13">${T('hmmmmmmpen', 34, 772, 74, -1)}</g>` : T('hmmmmmmpen', 34, 772, 74, -1);
+    ink += '<path d="M462 -4H486L490 318L478 300L466 322Z" fill="var(--ink-deep)" opacity=".92"/><path d="M470 0L472 300" stroke="var(--band-hi)" stroke-width="2" fill="none" opacity=".6"/>';
+    ink += '<path d="M459 659H604L459 804Z" fill="#000" opacity=".1"/><path d="M455 655H600L455 800Z" fill="var(--paper-2)"/>' + P(p.edges([[455,655],[600,655],[455,800]], .8, 1));
+    ink += eselSVG(f.eselFed);
+    return pageSVG('r', true) + inkG(ink);
+  },
+  hs(){
+    const f = S.f;
+    return [
+      { id: 'falz47', name: '← Seite 46', shape: { r: [0, 0, 40, 800] }, exit: 's46', walk: 100 },
+      { id: 'kaffee', name: 'Kaffeerand', shape: { c: [150, 250, 64] }, walk: 150,
+        look: () => think('Ein Kaffeerand. ne trinkt beim Zeichnen Kaffee. Das erklärt die Zacken.'),
+        take: () => think('Eingetrocknet. Für immer. Wie alles hier.'),
+        use: () => think('Ich trinke keinen Kaffee. Ich bin auch so schon zackig genug.') },
+      { id: 'datum', name: 'Datum', shape: { r: [50, 44, 190, 52] }, walk: 120,
+        look: () => think('»Sa, 7.11.« Mein Geburtstag. Gestern war ich noch eine leere Seite.'),
+        take: () => think('Das Datum bleibt. Sonst weiß keiner mehr, wann ich gezeichnet wurde.') },
+      { id: 'stern', name: 'Sternchen', shape: { c: [330, 160, 26] }, walk: 300,
+        look: () => think('Ein Sternchen. ne malt Sternchen beim Nachdenken. Oder beim Telefonieren. Oder einfach so.'),
+        take: () => think('Das Sternchen leuchtet nicht mal. Kann bleiben.') },
+      { id: 'band', name: 'Lesebändchen', shape: { r: [452, 0, 48, 330] }, walk: 390,
+        look: () => think('Das Lesebändchen. Es hängt von oben herab und markiert diese Seite. Jemand will hierher zurückkommen. Zu mir!'),
+        take: () => think('Zu hoch. Und wenn ich daran ziehe, klappt vielleicht das ganze Buch zu. Mit mir drin. Nee.'),
+        use: () => think('Ich hab mal dran gezogen. Da hat das ganze Buch gewackelt. Lieber nicht.') },
+      { id: 'strich', name: 'Ausrutscher', shape: { p: '392,604 598,552 598,580 392,632' }, walk: 380,
+        look: () => think('Ein langer Strich quer über die Seite. Da ist ne der Kuli ausgerutscht. Oder es war Absicht. Bei Kunst weiß man nie.'),
+        take: () => think('Der ist festgeschrieben. Und ehrlich gesagt: ohne ihn wäre die Seite langweiliger.'),
+        use: () => think('Ich könnte draufrutschen. Aber wohin? Aus der Seite raus? Lieber nicht.') },
+      ...(f.summ ? [] : [{ id: 'summ', name: 'Summlinie »hmmmmpen«', shape: { r: [28, 712, 410, 80] }, walk: 230,
+        look: () => think('»Hmmmmmmmmpen.« Das hab ich gesagt, als ne mich fertig gezeichnet hat. Es ist da unten liegen geblieben und summt leise vor sich hin.'),
+        take: async () => { if (has('klammer')) return hebeln(); await think('Klebt fest. Kuli hält ewig. Ich bräuchte etwas Dünnes zum Drunterhebeln.'); },
+        use: () => think('Ich kann mitsummen. Hmmmmpf. Klingt gleich.'),
+        item: async it => { if (it === 'klammer'){ await hebeln(); return true; } if (it === 'zacke'){ await think('Erst muss die Summlinie vom Papier runter. Sie klebt fest.'); return true; } return false; } }]),
+      { id: 'ohr', name: f.eselFed ? 'Eselsohr → Seite 48' : 'Eselsohr', shape: { p: '455,655 600,655 455,800' }, exit: 's48', walk: 400,
+        canExit: async () => { if (S.f.eselFed) return true; await npc('Esel', 'I-A! Halt. Das ist mein Ohr. Durchs Eselsohr kommt nur, wer was zu fressen mitbringt.'); S.f.eselWill = true; return false; } },
+      { id: 'esel', name: 'Esel', shape: { p: '508,700 600,630 600,800 508,800' }, walk: 400, verbs: ['look', 'talk', 'take'],
+        look: () => think(S.f.eselFed ? 'Der Esel kaut zufrieden auf dem Wort »Möhren« herum. Er hat die Augen zu. Wie ich früher.' : 'Ein Esel. Er wohnt im Eselsohr, also in der umgeknickten Ecke. Er guckt, als gehöre ihm die ganze Ecke. Tut sie ja auch.'),
+        take: () => npc('Esel', 'I-A? Ich bin doch kein Gegenstand. Ich bin ein Ohr mit Esel dran.'),
+        talk: talkEsel,
+        item: async it => {
+          if (it === 'moehren'){
+            await npc('Esel', 'Ist das … das Wort »Möhren«?');
+            await npc('Esel', 'I-A! *mampf* *mampf* Schmeckt nach Kuli. Wie alles hier. Aber knackig.');
+            drop('moehren'); S.f.eselFed = true; render();
+            await npc('Esel', 'Abgemacht, Kleiner. Das Eselsohr gehört dir. Tipp drauf, dann blätterst du um.');
+            return true;
+          }
+          if (it === 'bon'){ await npc('Esel', 'Papier? Ich bin ein Esel, keine Ziege.'); return true; }
+          if (it === 'marmelade'){ await npc('Esel', 'Erdbeer? Ich bin Esel. Ich will Möhren.'); return true; }
+          if (it === 'kruemel'){ await npc('Esel', 'Radiergummi. Bah. Schmeckt nach Hausaufgaben.'); return true; }
+          await npc('Esel', 'I-A. Kann man das essen? Nein? Dann nein.'); return true;
+        } }
+    ];
+  }
+};
+async function hebeln(){
+  sfx.scribble();
+  await narr('Hmpf schiebt die Büroklammer unter die Summlinie und hebelt. Knirsch. Die Linie löst sich vom Papier.');
+  S.f.summ = true; drop('klammer'); give('summ'); render();
+  await npc('Summlinie', 'Mmmmmmmmmm.');
+  await think('Sie summt. Ein bisschen beleidigt, glaube ich. Die Büroklammer ist jetzt krumm. Wie alle Büroklammern irgendwann.');
+}
+async function talkEsel(){
+  if (S.f.won){ await npc('Esel', 'I-A. Du redest jetzt? Gewöhnungsbedürftig. Aber schön.'); return; }
+  if (!S.f.eselHallo){ S.f.eselHallo = true; await npc('Esel', 'I-A. Was guckst du so? Noch nie einen Esel im Eselsohr gesehen?'); }
+  for (;;){
+    const c = await choose([
+      { key: 'wer', label: '»Hmpf?« <span>(Wer bist du?)</span>' },
+      ...(S.f.eselFed ? [] : [{ key: 'durch', label: '»Hmpf hmpf!« <span>(Lass mich durch!)</span>' }]),
+      { key: 'herz', label: '»Hmmmpf.« <span>(zeigt aufs Herz)</span>' },
+      { key: 'tschuess', label: '»Hmpf.« <span>(Tschüss.)</span>' }
+    ]);
+    if (c === 'wer'){ await hm('Hmpf?'); await npc('Esel', 'Ich bin das Eselsohr. Irgendwer hat diese Ecke umgeknickt, und zack, da war ich. So entstehen Esel. Wusstest du nicht, was?'); }
+    if (c === 'durch'){ await hm('Hmpf hmpf!'); await npc('Esel', 'Hinter mir geht’s zu Seite 48. Aber ich bin ein Esel. Ich bewege mich nur für Futter.'); await npc('Esel', 'Möhren wären gut. Gibt’s hier aber nicht. Hier gibt’s nur Papier und Wörter.'); S.f.eselWill = true; }
+    if (c === 'herz'){ await hm('Hmmmpf.'); await npc('Esel', 'Dein Herz ist zugekritzelt? Ich bin Esel, kein Kardiologe. Frag Gerda auf Seite 46. Die ist sehr alt und sehr langsam. Wer so langsam ist, hat viel Zeit zum Nachdenken.'); }
+    if (c === 'tschuess'){ await hm('Hmpf.'); await npc('Esel', 'I-A.'); return; }
+  }
+}
+
+SC.s46 = {
+  title: 'Seite 46', base: 770, minX: 100, maxX: 260, order: 46, enter: { s47: 260 },
+  first: 'Seite 46. Die Seite vor mir. Hier stehen alte Notizen von ne. Und irgendwas schmatzt da.',
+  draw(){
+    const f = S.f, p = new Pen(4610);
+    let ink = T('46', 44, 62, 30);
+    ink += T('Einkaufen:', 66, 132, 48, -2) + P(p.line(64, 144, 262, 140, 1));
+    ink += T('– Milch', 78, 196, 42, -1) + T('– Eier', 78, 246, 42, -1);
+    ink += f.moehren ? T('–', 78, 296, 42, -1) + `<g opacity=".12">${T('Möhren', 106, 296, 42, -1)}</g>` : T('– Möhren', 78, 296, 42, -1);
+    ink += T('– Kuli (blau!)', 78, 346, 42, -1) + T('– Tintenkiller', 78, 396, 42, -1) + P(p.line(108, 384, 292, 380, 1)) + T('bringt nix', 302, 404, 28, -8);
+    ink += T('n', 530, 190, 58, 4) + T('h', 538, 262, 58, -3) + T('n', 526, 334, 58, 2);
+    ink += jamSVG(f.jamGiven) + gerdaSVG() + kleckSVG();
+    return pageSVG('l', false) + inkG(ink);
+  },
+  hs(){
+    const f = S.f;
+    return [
+      { id: 'falz46', name: 'Seite 47 →', shape: { r: [560, 0, 40, 800] }, exit: 's47', walk: 260 },
+      { id: 'liste', name: 'Einkaufsliste', bg: true, shape: { r: [55, 92, 320, 330] }, walk: 170,
+        look: () => think(S.f.moehren ? 'Die Einkaufsliste von ne. Milch, Eier, eine Lücke, Kuli (blau!). Die Lücke war ich.' : 'Eine Einkaufsliste von ne. Milch, Eier, Möhren, Kuli (blau!). »Tintenkiller« ist durchgestrichen, daneben steht »bringt nix«. Stimmt. Gegen Kuli hilft kein Tintenkiller.'),
+        take: () => think('Die ganze Liste? Zu schwer. Aber einzelne Wörter sitzen ziemlich locker.') },
+      ...(f.moehren ? [] : [{ id: 'moehren', name: 'Wort »Möhren«', shape: { r: [64, 258, 200, 48] }, walk: 170,
+        look: () => think('»Möhren«. Ein knackiges Wort. Es sitzt ziemlich locker auf der Zeile.'),
+        take: async () => { S.f.moehren = true; give('moehren'); render(); await think('Ich hab das Wort »Möhren« von der Liste gepflückt. Es ist knackig. Zumindest für ein Wort.'); await firstTake(); },
+        use: () => think('Ich lese es laut vor: »Hmpf.« Hm. Fast.') }]),
+      { id: 'reste', name: 'Wortenden', shape: { r: [498, 120, 62, 230] }, walk: 250,
+        look: () => think('Wortenden. »…n«, »…h«, »…n«. Die Anfänge stehen auf Seite 45. Seit Jahren warten die Enden auf ihre Anfänge. Wie romantisch.'),
+        take: () => think('Ohne Anfang sind die nutzlos. Wie ein Witz ohne Pointe. Also, andersrum.') },
+      { id: 'jam', name: 'Marmeladenfleck', shape: { c: [352, 474, 50] }, walk: 250,
+        look: () => think(S.f.jamGiven ? 'Gerdas Marmelade. Etwas weniger als vorher. Sie hat mir einen Klecks abgegeben.' : 'Ein Marmeladenfleck. Erdbeer. Rot! Das einzige Rot im ganzen Notizbuch. Gerda isst davon.'),
+        take: jamGrab, use: jamGrab, item: gerdaItem },
+      { id: 'gerda', name: 'Gerda', shape: { c: [452, 448, 58] }, walk: 250, verbs: ['look', 'talk', 'take'],
+        look: () => think('Eine Spirale mit Fühlern. Oder eine Schnecke mit sehr viel Haus. Sie kaut.'),
+        take: () => think('Man nimmt keine Leute mit. Auch keine Spiralen.'),
+        talk: talkGerda, item: gerdaItem },
+      { id: 'klecks', name: 'Tintenklecks', shape: { c: [482, 662, 40] }, walk: 260,
+        look: () => think('Ein Tintenklecks. Hier hat ne den Kuli zu lange aufs Papier gedrückt und nachgedacht. Worüber wohl?'),
+        take: () => think('Der ist noch feucht. Ich will nicht abfärben.'),
+        use: () => think('Ich könnte reinhüpfen. Dann wär ich aber ein Klecks mit Brille.') }
+    ];
+  }
+};
+async function jamGrab(){
+  if (S.f.jamGiven){ await think('Gerda hat mir schon was abgegeben. Gierig sein steht mir nicht.'); return; }
+  await npc('Gerda', 'Finger weg! … Ach so, du hast ja gar keine. Trotzdem: Das ist meine Marmelade.');
+  if (S.f.gerdaWill) await npc('Gerda', 'Bring mir was Neues zum Lesen, dann teile ich.');
+}
+async function gerdaItem(it){
+  if (it === 'bon'){
+    await npc('Gerda', 'Ein Kassenbon! Lesestoff!');
+    await npc('Gerda', '»Schreibwaren Kessler. 1 Notizbuch, 21,95. 1 Kuli blau, 1,49. 1 Herz …« Oh.');
+    await npc('Gerda', '»1 Herz: nicht vorrätig.« Wie traurig. Dann musst du deins eben reparieren.');
+    drop('bon'); give('marmelade'); S.f.jamGiven = true; render();
+    await npc('Gerda', 'Hier. Ein Klecks Erdbeer. Für dein Herz. Rot steht dir bestimmt.');
+    return true;
+  }
+  if (it === 'moehren'){ await npc('Gerda', 'Das sind die Möhren von meiner Liste! Behalt sie. Ich esse nur Marmelade. Seit Wochen.'); return true; }
+  if (it === 'marmelade'){ await npc('Gerda', 'Behalt den Klecks. Der ist für dein Herz.'); return true; }
+  await npc('Gerda', 'Lieb gemeint. Aber nein danke.'); return true;
+}
+async function talkGerda(){
+  if (S.f.won){ await npc('Gerda', 'Wie schön, dass du redest. Komm mich besuchen, wenn du wieder Marmelade brauchst.'); return; }
+  if (S.f.moehren && !S.f.gerdaMoehren){ S.f.gerdaMoehren = true; await npc('Gerda', 'Milch. Eier. Möh… Moment. Wo sind die Möhren hin? Ich lese diese Liste seit drei Wochen, und jetzt fehlt was.'); }
+  if (!S.f.gerdaHallo){ S.f.gerdaHallo = true; await npc('Gerda', 'Oh. Besuch. Hallo, Kleiner. Entschuldige, ich kaue gerade.'); }
+  for (;;){
+    const c = await choose([
+      { key: 'wer', label: '»Hmpf?« <span>(Wer bist du?)</span>' },
+      { key: 'herz', label: '»Hmmmpf.« <span>(zeigt aufs Herz)</span>' },
+      ...(S.f.gerdaMet && !S.f.jamGiven ? [{ key: 'jam', label: '»Hmpf hmpf?« <span>(zeigt auf die Marmelade)</span>' }] : []),
+      { key: 'tschuess', label: '»Hmpf.« <span>(Tschüss.)</span>' }
+    ]);
+    if (c === 'wer'){ await hm('Hmpf?'); await npc('Gerda', 'Ich bin Gerda. Eine Spirale. Oder eine Schnecke. ne hat sich nie entschieden, und ich mich auch nicht. Sehr entspannend.'); }
+    if (c === 'herz'){
+      await hm('Hmmmpf.');
+      await npc('Gerda', 'Ach, Kind. Durchgekritzelt. Das passiert, wenn der Kuli zweifelt.');
+      await npc('Gerda', 'Ein Herz braucht drei Dinge: <b>Platz</b>, <b>Farbe</b> und <b>Takt</b>.');
+      await npc('Gerda', 'Platz hast du keinen, da ist alles verknäuelt. Such das lose Ende und wickel es auf.');
+      await npc('Gerda', 'Farbe hat hier keiner. Alles ist kuliblau. Außer meiner Marmelade.');
+      await npc('Gerda', 'Und Takt … der fängt meistens mit einem Summen an. Und dann braucht er Zacken.');
+      S.f.gerdaMet = true; renderGoal();
+    }
+    if (c === 'jam'){
+      await hm('Hmpf hmpf?');
+      await npc('Gerda', 'Meine Marmelade? Erdbeer. Das einzige Rot im ganzen Buch. Ich esse seit Wochen daran.');
+      await npc('Gerda', 'Ich gebe dir was ab. Aber nicht umsonst. Ich hab nichts mehr zu lesen, die Einkaufsliste kenne ich auswendig. Bring mir was Neues zum Lesen.');
+      S.f.gerdaWill = true;
+    }
+    if (c === 'tschuess'){ await hm('Hmpf.'); await npc('Gerda', 'Kriech vorsichtig, Kleiner.'); return; }
+  }
+}
+
+SC.s48 = {
+  title: 'Seite 48', base: 770, minX: 210, maxX: 460, order: 48, enter: { s47: 210, hinten: 460 },
+  first: 'Seite 48. Meine Rückseite. Hier ist fast nichts. Nur ein schlafender Kuli.',
+  draw(){
+    const f = S.f, p = new Pen(4810);
+    const ghost = `<g opacity=".1" transform="translate(600 0) scale(-1 1)"><g transform="translate(90 112) scale(1.05)" style="--sw:2.2px">${hmpfSVG({ knot: true, red: false, takt: false, trense: true, eyes: false, zacke: false, beat: false })}</g></g>`;
+    let ink = T('48', 44, 62, 30) + kuliSVG() + (f.kruemel ? '' : kruemelSVG());
+    if (f.kuliNe) ink += T('ne', 468, 330, 34, -6);
+    ink += '<path d="M4 659H149V804Z" fill="#000" opacity=".1"/><path d="M0 655H145V800Z" fill="var(--paper-2)"/>' + P(p.edges([[0,655],[145,655],[145,800]], .8, 1));
+    return pageSVG('l', true) + ghost + inkG(ink);
+  },
+  hs(){
+    const f = S.f;
+    return [
+      { id: 'abdruck', name: 'Durchgedrücktes', bg: true, shape: { r: [150, 380, 400, 250] }, walk: 330,
+        look: () => think('Hier drückt sich etwas durch. Spiegelverkehrt. Das bin ja ich! Von hinten. Ich sehe von hinten genauso aus wie von vorne, nur verkehrt rum. Beruhigend.'),
+        take: () => think('Das ist nur ein Abdruck. Wie eine Erinnerung. Kann man nicht mitnehmen.') },
+      { id: 'ohr48', name: '← Eselsohr (Seite 47)', shape: { p: '0,655 145,655 145,800' }, exit: 's47', walk: 210 },
+      { id: 'weiter48', name: 'Ganz nach hinten →', shape: { r: [560, 0, 40, 800] }, exit: 'hinten', walk: 460 },
+      { id: 'kuli', name: 'Kuli', shape: { p: KULI_POLY }, walk: 330,
+        look: () => think('Der Kuli. Blau. Damit hat ne mich gezeichnet. Er schläft. Kulis schlafen viel, wenn gerade keiner schreibt.'),
+        take: () => think('Der ist zehnmal so groß wie ich. Und ich hab keine Arme. Nee.'),
+        use: async () => {
+          sfx.click(); S.f.kuliKlick = (S.f.kuliKlick || 0) + 1;
+          if (S.f.kuliKlick === 1) return think('Klick. Die Mine fährt raus. Klick. Wieder rein. Ich fühle mich seltsam beobachtet.');
+          if (S.f.kuliKlick === 2) return think('Klick, klick. Der Kuli grummelt im Schlaf.');
+          if (!S.f.kuliNe){ S.f.kuliNe = true; render(); return narr('Der Kuli zuckt im Schlaf und kritzelt zwei Buchstaben aufs Papier: »ne«. Dann schnarcht er weiter.'); }
+          return think('Klick. Er schläft wieder tief und fest.');
+        },
+        item: async it => { if (it === 'kruemel'){ await think('Radiergummi gegen Kuli, das ist wie Wattebausch gegen Elefant. Der Kuli lacht im Schlaf.'); return true; } return false; } },
+      ...(f.kruemel ? [] : [{ id: 'kruemel', name: 'Radiergummikrümel', shape: { c: [422, 640, 42] }, walk: 400,
+        look: () => think('Radiergummikrümel. Gegen Kuli völlig machtlos. Aber sie geben sich Mühe.'),
+        take: async () => { S.f.kruemel = true; give('kruemel'); render(); await think('Ein paar Krümel. Man weiß ja nie.'); await firstTake(); } }])
+    ];
+  }
+};
+
+SC.hinten = {
+  title: 'Hinterer Buchdeckel', base: 790, minX: 110, maxX: 480, order: 49, enter: { s48: 120 },
+  first: 'Ganz hinten. Der Buchdeckel mit der Einstecktasche. Hier landet alles, was man nicht wegwerfen will.',
+  draw(){
+    const f = S.f, p = new Pen(4901);
+    const d = 'M0 0H578Q600 0 600 22V778Q600 800 578 800H0Z';
+    const bg = `<path d="${d}" fill="var(--board)"/><path d="${d}" fill="#fff" filter="url(#grain)"/><rect width="70" height="800" fill="url(#falzL)"/>`;
+    let ink = T('Bei Verlust bitte zurück an:', 60, 96, 38, -1) + T('ne', 96, 164, 80, -3) + P(p.line(60, 180, 420, 176, 1)) + T('Finderlohn:', 60, 226, 36, -1) + P(p.line(208, 230, 420, 228, .8), 'kt');
+    if (f.gummiOff){
+      ink += '<path d="M44 400C200 380 400 380 556 400Z" fill="var(--ink)" opacity=".2"/><g transform="translate(0 56)">';
+      if (!f.bleistift){ const q = new Pen(4902); ink += `<g transform="rotate(-6 152 300)"><path d="M140 252H164V352H140Z" fill="var(--paper-3)"/><path d="M140 252L152 222L164 252Z" fill="var(--paper-2)"/>${P(q.edges([[140,252],[164,252],[164,352],[140,352]], .6, 1) + q.line(140, 252, 152, 222, .3) + q.line(152, 222, 164, 252, .3))}${P(q.line(148, 254, 148, 350, .3) + q.line(156, 254, 156, 350, .3), 'kt')}<path class="fi" d="M148 232L152 222L156 232Z"/></g>`; }
+      if (!f.bon){ let l = ''; for (let y = 242; y < 344; y += 12) l += `M252 ${y}H${266 + (y * 7) % 22}`; ink += `<path d="M244 352V234C244 206 290 198 294 224V352Z" fill="#faf7ee"/>${P('M244 352V234C244 206 290 198 294 224V352')}${P(l, 'kt')}`; }
+      if (!f.klammer) ink += '<path d="M436 360V292a9 9 0 0 1 18 0v58a6 6 0 0 1 -12 0V302" fill="none" stroke="var(--clip)" stroke-width="3" stroke-linecap="round"/>';
+      ink += '</g>';
+    }
+    ink += '<path d="M40 400H560V780H40Z" fill="var(--paper-2)"/>' + P(p.edges([[40,400],[560,400],[560,780],[40,780]], 1, 2)) + P(p.line(44, 412, 556, 410, .8) + p.line(40, 400, 64, 432, .5) + p.line(560, 400, 536, 432, .5) + p.line(64, 432, 64, 770, .6) + p.line(536, 432, 536, 770, .6), 'kt');
+    ink += f.gummiOff
+      ? '<path d="M582 -10V810" stroke="var(--band)" stroke-width="18" fill="none"/><path d="M577 -10V810" stroke="var(--band-hi)" stroke-width="2.5" fill="none" opacity=".7"/>'
+      : '<path d="M-10 452L610 360" stroke="var(--band)" stroke-width="18" stroke-linecap="round" fill="none"/><path d="M-10 446L610 354" stroke="var(--band-hi)" stroke-width="2.5" fill="none" opacity=".7"/>';
+    return bg + inkG(ink);
+  },
+  hs(){
+    const f = S.f;
+    return [
+      { id: 'zur48', name: '← Seite 48', shape: { r: [0, 0, 40, 800] }, exit: 's48', walk: 110 },
+      { id: 'adresse', name: 'Adressfeld', bg: true, shape: { r: [50, 50, 440, 190] }, walk: 200,
+        look: () => think('»Bei Verlust bitte zurück an: ne.« Finderlohn: leer. ne ist großzügig mit Tinte, aber nicht mit Geld.'),
+        take: () => think('Ohne Adresse findet das Buch nie nach Hause. Und ich auch nicht.') },
+      { id: 'tasche', name: 'Einstecktasche', bg: true, shape: { r: [40, 400, 520, 380] }, walk: 300,
+        look: () => think(S.f.gummiOff ? 'Die Einstecktasche. Offen. Riecht nach Kassenbon und Bleistift.' : 'Die Einstecktasche. Da hebt ne Sachen auf, die nirgendwo sonst hinpassen. Das Gummiband klemmt sie zu.'),
+        take: () => think('Die ganze Tasche? Die ist am Buchdeckel festgeklebt.'),
+        use: () => think(S.f.gummiOff ? 'Was drin ist, guckt oben raus.' : 'Zugeklemmt. Das Gummiband muss weg.') },
+      ...(f.gummiOff ? [] : [{ id: 'gummi', name: 'Gummiband', shape: { p: '0,432 600,343 600,380 0,469' }, walk: 300,
+        look: () => think('Das Gummiband vom Notizbuch. Es ist über die Tasche gerutscht und hält sie zu. Straff wie eine Trampolinkante.'),
+        take: () => think('Ziehen kann ich nicht. Keine Arme. Aber hüpfen kann ich …'),
+        use: async () => {
+          await think('Arme hab ich nicht. Aber hüpfen kann ich. Und zwar ziemlich gut.');
+          await bigHop();
+          S.f.gummiOff = true; render();
+          await narr('BUMS! Hmpf landet mit Wucht auf dem Gummiband. Es schnalzt zur Seite. Die Einstecktasche ist offen.');
+        } }]),
+      ...(f.gummiOff && !f.bleistift ? [{ id: 'bleistift', name: 'Bleistiftstummel', shape: { r: [128, 270, 50, 136] }, walk: 160,
+        look: () => think('Ein Bleistiftstummel. Kurz, rund, geduldig. Man könnte was drumwickeln.'),
+        take: async () => { S.f.bleistift = true; give('bleistift'); render(); await think('Bleistift im Bauch. Ein Kuli-Wesen mit Bleistift. Skandal.'); await firstTake(); } }] : []),
+      ...(f.gummiOff && !f.bon ? [{ id: 'bon', name: 'Kassenbon', shape: { r: [236, 252, 66, 150] }, walk: 260,
+        look: () => think('Ein Kassenbon. Lang. Da steht bestimmt was Wichtiges drauf.'),
+        take: async () => { S.f.bon = true; give('bon'); render(); await think('Ein Kassenbon. Lesestoff für unterwegs.'); await firstTake(); } }] : []),
+      ...(f.gummiOff && !f.klammer ? [{ id: 'klammer', name: 'Büroklammer', shape: { r: [420, 328, 48, 84] }, walk: 420,
+        look: () => think('Eine Büroklammer. Gut zum Hebeln, Stochern und für alles, wofür sie eigentlich nicht gemacht ist.'),
+        take: async () => { S.f.klammer = true; give('klammer'); render(); await think('Eine Büroklammer. Die kann man immer brauchen.'); await firstTake(); } }] : [])
+    ];
+  }
+};
+
+SC.nah = {
+  title: 'Nahaufnahme', base: 0, order: 47,
+  draw(){ return pageSVG('r', false) + inkG(`<g transform="translate(80 54) scale(1.1)" style="--sw:2.2px">${hmpfSVG(hf())}</g>`); },
+  hs(){
+    const f = S.f;
+    const ohr = { look: () => think('Ein Ohr. Ich höre damit das Kratzen vom Kuli. Und manchmal Musik von draußen.'), take: () => think('Ich brauche beide. Für Stereo.') };
+    return [
+      { id: 'bauch', name: 'Bauch', bg: true, shape: { r: TR(20, 312, 360, 326) },
+        look: () => think('Mein Bauch. Groß, rund, voller Zacken. Hier drin bewahre ich alles auf, was ich finde.'),
+        take: () => think('Den hab ich schon.'), use: () => think('Ich hüpfe damit. Bums.'), item: herzItem },
+      { id: 'haare', name: 'Haare', shape: { r: TR(110, 0, 210, 78) },
+        look: () => think('Meine Haare. ne hat sie mit Schwung gezeichnet. Seitdem stehen sie stramm.'),
+        take: () => think('Ich reiß mir doch nicht die Haare aus. So schlimm ist es noch nicht.') },
+      { id: 'brille', name: 'Brille', shape: { r: TR(106, 140, 190, 90) },
+        look: () => think(S.f.augen ? 'Meine Brille. Dahinter: zwei offene Augen. Ich kann alles sehen. Sogar Farben. Also: Rot.' : 'Meine Brille. Dahinter: zwei Striche. Meine Augen sind zu. Ich sehe trotzdem alles. Ist halt Tinte.'),
+        take: () => think('Die Brille bleibt drauf. Ohne sehe ich noch unschärfer.'),
+        use: () => think('Ich schiebe sie hoch. Sie rutscht wieder runter. Wie immer.') },
+      { id: 'ohrL', name: 'Ohr', shape: { r: TR(62, 150, 42, 72) }, ...ohr },
+      { id: 'ohrR', name: 'Ohr', shape: { r: TR(296, 150, 42, 72) }, ...ohr },
+      { id: 'mund', name: f.trenseWeg ? 'Mund' : 'Trense', shape: { r: TR(108, 226, 184, 48) }, verbs: ['look', 'take', 'talk'],
+        look: () => think(S.f.trenseWeg ? 'Mein Mund. Ganz frei. Ich kann reden! Ich weiß nur noch nicht, worüber.' : 'Eine Trense. Wie bei Pferden. Darum sage ich nur »Hmpf«. Ich glaube, ne hat sich da verzeichnet.'),
+        take: async () => { if (S.f.trenseWeg) return think('Da ist nichts mehr. Die Trense ist irgendwo hinter Seite 52 gelandet.'); await hm('Hmmmpf!'); await think('Sitzt fest. Da müsste schon von innen was kräftig dagegenbumsen.'); },
+        talk: async () => { if (S.f.trenseWeg) return say('Hallo? Hallo! Ha.'); await hm('Hmpf.'); await think('Siehste.'); },
+        item: async it => { if (it === 'klammer' && !S.f.trenseWeg){ await think('Mit der Büroklammer hebeln? Die Trense sitzt zu fest. Da müsste schon was von innen dagegenhauen.'); return true; } return false; } },
+      { id: 'kinn', name: 'Kinn', shape: { r: TR(176, 276, 48, 34) },
+        look: () => think('Mein Kinn. Mit Bärtchen. Sehr erwachsen.') },
+      { id: 'zacken', name: 'Zacken', shape: { r: TR(60, 346, 280, 32) },
+        look: () => think('Zacken. Ich hab überall Zacken in mir. Wie Gänsehaut. Oder ein Gebirge. Oder ein Aufschrei.'),
+        take: async () => { if (S.f.zacke) return think('Eine reicht. Ich bin doch kein Zackenautomat.'); await hm('Hmpf!'); S.f.zacke = true; give('zacke'); render(); await think('Autsch. Ich hab mir eine Zacke ausgerupft. Hab ja genug davon.'); await firstTake(); },
+        item: async it => { if (it === 'zacke'){ await think('Wieder reinstecken? Nö. Die hat jetzt eine Aufgabe.'); return true; } return false; } },
+      { id: 'herz', name: f.platz ? 'Herz' : 'Knäuel', shape: { r: TR(100, 376, 200, 170) },
+        look: () => {
+          const g = S.f;
+          if (g.won) return think('Mein Herz. Rot, mit Zacken drin, und es bumst. Bums. Bums. Hört ihr das?');
+          if (!g.platz) return think('Ein Knäuel aus Kuli. Darunter war mal mein Herz. Ganz unten hängt ein loses Ende raus. Wenn ich nur etwas zum Aufwickeln hätte.');
+          if (!g.farbe && !g.takt) return think('Da ist es wieder, mein Herz. Ein leerer Umriss. Es hat Platz, aber es tut nichts. Kein Rot, kein Takt.');
+          if (!g.farbe) return think('Es zuckt im Takt, aber es ist so blass. Ein Herz sollte rot sein.');
+          return think('Rot und hübsch. Aber still. Es fehlt der Takt.');
+        },
+        take: () => think(S.f.platz ? 'Mein Herz bleibt, wo es ist.' : 'Zu fest verknotet. Ich brauche etwas, worum ich das lose Ende wickeln kann.'),
+        use: () => think(S.f.won ? 'Es läuft. Ganz von allein.' : S.f.platz ? 'Ich hüpfe auf der Stelle. Bums. Das Herz bumst nicht mit.' : 'Ich zerre am Knäuel. Es zerrt zurück.'),
+        item: herzItem },
+      { id: 'wort', name: 'Wort »bumsen«', shape: { r: TR(96, 570, 208, 54) },
+        look: () => think(S.f.won ? 'Da steht »bumsen«. Und genau das macht mein Herz jetzt. Bums. Bums.' : 'Da steht »bumsen«. Ein Herz soll bumsen: bums, bums, bums. Meins ist still. … Was habt ihr denn gedacht?'),
+        take: () => think('Das Wort gehört zu mir. Es ist sozusagen meine Bedienungsanleitung.') },
+      { id: 'ne', name: 'Signatur »ne«', shape: { c: [f1(80 + 334 * 1.1), f1(54 + 626 * 1.1), 22] },
+        look: () => think('Ein kleiner Kreis mit »ne« drin. Die Signatur. Ich bin ein Original.'),
+        take: () => think('Die Signatur entfernen? Dann wäre ich ja eine Fälschung.') }
+    ];
+  }
+};
+
+/* ================= Rendering ================= */
+let HS = new Map();
+function hsShape(h){
+  const a = `data-hs="${h.id}" class="hs" tabindex="0" role="button" aria-label="${h.name}"`, s = h.shape;
+  if (s.r) return `<rect ${a} x="${s.r[0]}" y="${s.r[1]}" width="${s.r[2]}" height="${s.r[3]}"/>`;
+  if (s.c) return `<circle ${a} cx="${s.c[0]}" cy="${s.c[1]}" r="${s.c[2]}"/>`;
+  return `<polygon ${a} points="${s.p}"/>`;
+}
+function avatarHS(){ const sc = SC[S.scene]; return { id: 'hmpf', name: 'Hmpf (Nahaufnahme)', shape: { r: [f1(ax - 95), sc.base - 312, 190, 312] } }; }
+function render(){
+  const sc = SC[S.scene];
+  sceneEl.innerHTML = sc.draw();
+  const list = sc.hs();
+  const ordered = [...list.filter(h => h.bg), ...(sc.base ? [avatarHS()] : []), ...list.filter(h => !h.bg)];
+  HS = new Map(ordered.map(h => [h.id, h]));
+  hotEl.innerHTML = ordered.map(hsShape).join('');
+  if (sc.base){
+    avatarEl.innerHTML = `<g class="ink" filter="url(#boil${boilI})"><g class="atmen" style="--sw:${(1.95 / AV).toFixed(2)}px">${hmpfSVG(hf())}</g></g>`;
+  } else avatarEl.innerHTML = '';
+  placeAvatar();
+  whereEl.textContent = sc.title;
+  backBtn.hidden = S.scene !== 'nah';
+  renderInv(); renderGoal(); updateLabel();
+}
+function placeAvatar(){
+  const sc = SC[S.scene];
+  if (!sc.base) return;
+  const sy = AV * squash;
+  avatarEl.setAttribute('transform', `translate(${f1(ax - 200 * AV)} ${f1(sc.base - 638 * sy + ay)}) scale(${AV} ${sy.toFixed(4)})`);
+  const r = hotEl.querySelector('[data-hs="hmpf"]');
+  if (r) r.setAttribute('x', f1(ax - 95));
+}
+function fxText(txt, x, y, size, cls = 'fxt'){
+  const NS = 'http://www.w3.org/2000/svg', t = document.createElementNS(NS, 'text');
+  t.setAttribute('x', f1(x)); t.setAttribute('y', f1(y)); t.setAttribute('font-size', f1(size)); t.setAttribute('text-anchor', 'middle');
+  t.setAttribute('class', 'hand ' + cls); t.textContent = txt;
+  fxEl.append(t); setTimeout(() => t.remove(), 1200);
+}
+function box(ok){
+  return `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5L17 3L16.5 17L3.5 16.6Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>${ok ? '<path d="M5 10L9 14L18 1.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' : ''}</svg>`;
+}
+function renderGoal(){
+  const f = S.f;
+  let h = `<h2>${f.won ? 'Geschafft' : 'Ziel'}</h2><p>${f.won ? 'Hmpfs Herz bumst wieder.' : 'Bring Hmpfs Herz wieder zum Schlagen.'}</p>`;
+  if (f.gerdaMet || f.platz || f.won){
+    h += '<ul class="checks">' + [['platz', 'Platz'], ['farbe', 'Farbe'], ['takt', 'Takt']].map(([k, l]) => `<li>${box(f[k] || f.won)}<span>${l}${f[k] || f.won ? '<span class="sr-only"> (erledigt)</span>' : ''}</span></li>`).join('') + '</ul>';
+  }
+  goalEl.innerHTML = h;
+}
+const ROT = [-2, 1.5, -1, 2, -1.5, 1];
+function renderInv(){
+  invEl.innerHTML = S.inv.length
+    ? S.inv.map((id, i) => `<button type="button" class="item${S.sel === id ? ' sel' : ''}" data-it="${id}" style="--r:${ROT[i % 6]}deg" aria-pressed="${S.sel === id}"><svg viewBox="0 0 60 60" style="--sw:2.2px" aria-hidden="true">${ICON[id]()}</svg><span>${ITEM[id].name}</span></button>`).join('')
+    : '<p class="empty">Noch nichts. Platz ist genug.</p>';
+  if (invAct.dataset.it && !has(invAct.dataset.it)) closeInvAct();
+}
+function closeInvAct(){ invAct.hidden = true; invAct.dataset.it = ''; }
+let hoverH = null;
+function updateLabel(){
+  if (!capEl.hidden || busy){ labelEl.hidden = true; return; }
+  let t = '';
+  if (S.sel) t = `Benutze ${ITEM[S.sel].name} mit ${hoverH ? hoverH.name : '…'}`;
+  else if (hoverH) t = hoverH.name;
+  labelEl.textContent = t; labelEl.hidden = !t;
+}
+
+/* ================= Bewegung ================= */
+function anim(dur, fn){ return new Promise(res => { const t0 = performance.now(); const step = now => { const t = Math.min(1, (now - t0) / dur); fn(t); t < 1 ? requestAnimationFrame(step) : res(); }; requestAnimationFrame(step); }); }
+async function walkTo(tx){
+  const sc = SC[S.scene]; if (!sc.base) return;
+  tx = Math.max(sc.minX, Math.min(sc.maxX, tx));
+  const dist = tx - ax; if (Math.abs(dist) < 12) return;
+  if (reduced){ ax = tx; placeAvatar(); return; }
+  const hops = Math.max(1, Math.round(Math.abs(dist) / 60)), step = dist / hops;
+  for (let i = 0; i < hops; i++){
+    const x0 = ax;
+    await anim(250, t => { ax = x0 + step * t; ay = -Math.sin(Math.PI * t) * 26; squash = t < .2 ? 1.05 : 1; placeAvatar(); });
+    ax = x0 + step; ay = 0; squash = .9; placeAvatar(); sfx.thump();
+    if (i % 2 === 0) fxText('bums', ax + (step > 0 ? 55 : -55), sc.base - 6, 22);
+    await wait(60); squash = 1; placeAvatar();
+  }
+}
+async function bigHop(){
+  const sc = SC[S.scene];
+  if (!reduced){
+    squash = .86; placeAvatar(); await wait(140);
+    await anim(520, t => { ay = -Math.sin(Math.PI * t) * 160; squash = 1 + Math.sin(Math.PI * t) * .06; placeAvatar(); });
+    ay = 0; squash = .82; placeAvatar();
+  }
+  sfx.thump(); sfx.boing(); fxText('BUMS!', ax, sc.base - 330, 60);
+  await wait(160); squash = 1; placeAvatar();
+}
+async function flip(dir, swap){
+  sfx.page();
+  if (reduced){ swap(); return; }
+  await svg.animate([{ transform: 'none', opacity: 1 }, { transform: `perspective(1600px) rotateY(${dir * -80}deg)`, opacity: .35 }], { duration: 190, easing: 'ease-in' }).finished;
+  swap();
+  await svg.animate([{ transform: `perspective(1600px) rotateY(${dir * 80}deg)`, opacity: .35 }, { transform: 'none', opacity: 1 }], { duration: 210, easing: 'ease-out' }).finished;
+}
+async function fade(swap){
+  if (reduced){ swap(); return; }
+  await svg.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140 }).finished;
+  swap();
+  await svg.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160 }).finished;
+}
+async function goto(id){
+  const from = S.scene, sc = SC[id];
+  await flip(sc.order > SC[from].order ? 1 : -1, () => {
+    S.scene = id; const e = sc.enter && sc.enter[from];
+    ax = e != null ? e : (sc.minX + sc.maxX) / 2; ay = 0; squash = 1; render();
+  });
+  save();
+  if (sc.first && !S.f.seen[id]){ S.f.seen[id] = true; await think(sc.first); }
+}
+async function openNah(){
+  S.prev = S.scene;
+  await fade(() => { S.scene = 'nah'; render(); });
+  if (!S.f.seen.nah){ S.f.seen.nah = true; await think('Nahaufnahme. So hat ne mich gezeichnet. Ich sehe gut aus. Bis auf das Herz.'); }
+}
+async function closeNah(){ await fade(() => { S.scene = S.prev || 's47'; render(); }); }
+
+/* ================= Aktionen ================= */
+const VERB = { look: 'Ansehen', take: 'Nehmen', use: 'Benutzen', talk: 'Reden' };
+async function run(fn){
+  if (busy) return;
+  busy = true; document.body.dataset.busy = '1'; hidePop(); updateLabel();
+  try { await fn(); } catch (err) { console.error(err); }
+  finally { busy = false; document.body.dataset.busy = ''; save(); renderGoal(); updateLabel(); }
+}
+async function doVerb(h, v){
+  if (h.walk != null) await walkTo(h.walk);
+  if (h[v]) return h[v]();
+  if (v === 'take') return think(pick(NOPE_TAKE));
+  if (v === 'use') return think(pick(NOPE_USE));
+  if (v === 'talk'){ await hm('Hmpf?'); return think(pick(NOPE_TALK)); }
+  return think('Hm.');
+}
+async function doExit(h){
+  if (h.walk != null) await walkTo(h.walk);
+  if (h.canExit && !(await h.canExit())) return;
+  await goto(h.exit);
+}
+async function useItem(it, h){
+  if (h.id === 'hmpf'){ await openNah(); await think('Wo genau? Tipp auf eine Stelle an mir.'); return; }
+  S.sel = null; renderInv(); updateLabel();
+  if (h.walk != null) await walkTo(h.walk);
+  const ok = h.item ? await h.item(it) : false;
+  if (!ok) await think(pick(NOPE_ITEM));
+}
+async function combine(a, b){
+  const pair = [a, b].sort().join('+');
+  if (pair === 'summ+zacke'){
+    sfx.scribble();
+    await narr('Hmpf steckt die Zacke mitten in die Summlinie. Aus »mmmmm« wird »mm/\\mm«.');
+    drop('summ'); drop('zacke'); give('puls');
+    await think('Eine Herzschlaglinie! Wie im Krankenhausfernsehen.');
+    return;
+  }
+  if (pair === 'bleistift+summ'){ await think('Die Summlinie um den Bleistift wickeln? Dann summt der Bleistift. Hilft keinem.'); return; }
+  await think(pick(NOPE_ITEM));
+}
+function activate(h, e, el){
+  if (S.sel){ const it = S.sel; run(() => useItem(it, h)); return; }
+  if (h.exit){ run(() => doExit(h)); return; }
+  if (h.id === 'hmpf'){ run(openNah); return; }
+  showPop(h, e, el);
+}
+function hidePop(){ popEl.hidden = true; }
+function showPop(h, e, el){
+  const verbs = h.verbs || ['look', 'take', 'use'];
+  popEl.innerHTML = `<div class="t">${h.name}</div>` + verbs.map(v => `<button type="button" data-v="${v}">${VERB[v]}</button>`).join('');
+  popEl.hidden = false;
+  const r = stage.getBoundingClientRect();
+  let x, y;
+  if (e && e.clientX != null && e.detail !== 0){ x = e.clientX - r.left; y = e.clientY - r.top; }
+  else { const b = (el || hotEl.querySelector(`[data-hs="${h.id}"]`)).getBoundingClientRect(); x = b.left + b.width / 2 - r.left; y = b.top + b.height / 2 - r.top; }
+  const pw = popEl.offsetWidth, ph = popEl.offsetHeight;
+  let px = Math.min(Math.max(8, x - pw / 2), r.width - pw - 8), py = y + 14;
+  if (py + ph > r.height - 8) py = Math.max(8, y - ph - 14);
+  popEl.style.left = px + 'px'; popEl.style.top = py + 'px';
+  popEl.onclick = ev => { const b = ev.target.closest('button'); if (!b) return; ev.stopPropagation(); const v = b.dataset.v; hidePop(); run(() => doVerb(h, v)); };
+  popEl.querySelector('button').focus({ preventScroll: true });
+}
+function toSVG(e){ const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+
+svg.addEventListener('click', e => {
+  if (pending){ pending(); return; }
+  if (busy) return;
+  const t = e.target.closest('[data-hs]');
+  const wasOpen = !popEl.hidden; hidePop();
+  if (!t){
+    if (S.sel){ S.sel = null; renderInv(); updateLabel(); return; }
+    if (wasOpen) return;
+    const sc = SC[S.scene];
+    if (sc.base){ const pt = toSVG(e); run(() => walkTo(pt.x)); }
+    return;
+  }
+  const h = HS.get(t.dataset.hs); if (h) activate(h, e, t);
+});
+svg.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  const t = e.target.closest && e.target.closest('[data-hs]');
+  const h = t ? HS.get(t.dataset.hs) : null;
+  if (h !== hoverH){ hoverH = h; updateLabel(); }
+});
+svg.addEventListener('pointerleave', () => { hoverH = null; updateLabel(); });
+capEl.addEventListener('click', e => { e.stopPropagation(); if (pending) pending(); });
+stage.addEventListener('click', e => { if (pending && e.target === stage) pending(); });
+backBtn.addEventListener('click', e => { e.stopPropagation(); if (pending){ pending(); return; } run(closeNah); });
+
+invEl.addEventListener('click', e => {
+  const b = e.target.closest('[data-it]'); if (!b) return;
+  if (pending){ pending(); return; }
+  if (busy) return;
+  const id = b.dataset.it;
+  if (S.sel && S.sel !== id){ const a = S.sel; S.sel = null; closeInvAct(); renderInv(); run(() => combine(a, id)); return; }
+  if (S.sel === id){ S.sel = null; closeInvAct(); renderInv(); updateLabel(); return; }
+  invAct.dataset.it = id; invAct.hidden = false;
+  invAct.innerHTML = `<span><b>${ITEM[id].name}:</b></span><button type="button" class="btn sm" data-a="look">Ansehen</button><button type="button" class="btn sm" data-a="use">Benutzen mit …</button>`;
+});
+invAct.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]'); if (!b) return;
+  if (pending){ pending(); return; }
+  if (busy) return;
+  const id = invAct.dataset.it; if (!id) return;
+  closeInvAct();
+  if (b.dataset.a === 'look'){ const L = ITEM[id].look; run(() => think(typeof L === 'function' ? L() : L)); return; }
+  S.sel = id; renderInv(); updateLabel();
+});
+
+document.addEventListener('keydown', e => {
+  if (!ovEl.hidden) return;
+  if (pending && (e.key === ' ' || e.key === 'Enter')){ e.preventDefault(); pending(); return; }
+  if (e.key === 'Escape'){ hidePop(); closeInvAct(); if (S.sel){ S.sel = null; renderInv(); updateLabel(); } return; }
+  const t = e.target.closest && e.target.closest('[data-hs]');
+  if (t && (e.key === 'Enter' || e.key === ' ') && !busy){ e.preventDefault(); const h = HS.get(t.dataset.hs); if (h) activate(h, null, t); }
+});
+
+/* ================= Tipp ================= */
+function hintText(){
+  const f = S.f;
+  if (f.won) return 'Geschafft! Hmpfs Herz bumst. Mehr gibt es nicht zu tun, außer zuzuhören.';
+  if (!f.gerdaMet) return 'Blätter nach links auf Seite 46 (Tipp auf den linken Seitenrand). Dort wohnt Gerda. Sie ist alt und weiß, wie man Herzen repariert. Rede mit ihr über dein Herz.';
+  if (!f.eselFed){
+    if (!has('moehren')) return 'Der Esel im Eselsohr unten rechts auf Seite 47 lässt nur durch, wer Futter bringt. Auf Gerdas Seite steht eine Einkaufsliste mit einem knackigen Wort.';
+    return 'Wähle im Bauch das Wort »Möhren«, tippe auf »Benutzen mit …« und dann auf den Esel.';
+  }
+  if (!f.platz){
+    if (!has('bleistift')){
+      if (!f.gummiOff) return 'Hinter dem Eselsohr liegt Seite 48, ganz hinten der Buchdeckel mit der Einstecktasche. Das Gummiband klemmt sie zu. Arme hast du keine, aber hüpfen kannst du: Benutze das Gummiband.';
+      return 'In der Einstecktasche steckt ein Bleistiftstummel. Gut zum Aufwickeln.';
+    }
+    return 'Tipp auf Hmpf für die Nahaufnahme und benutze den Bleistiftstummel mit dem Knäuel.';
+  }
+  if (!f.farbe){
+    if (has('marmelade')) return 'Benutze den Klecks Erdbeer mit deinem Herz (Nahaufnahme).';
+    if (!has('bon')){
+      if (!f.gerdaWill) return 'Frag Gerda nach ihrer Marmelade.';
+      return 'Gerda will was zu lesen. In der Einstecktasche ganz hinten steckt ein Kassenbon.';
+    }
+    return 'Gib Gerda den Kassenbon: auswählen, »Benutzen mit …«, dann auf Gerda tippen.';
+  }
+  if (!f.takt){
+    if (has('puls')) return 'Benutze die Herzschlaglinie mit deinem Herz (Nahaufnahme).';
+    if (has('summ') && has('zacke')) return 'Kombiniere Zacke und Summlinie: eins auswählen, »Benutzen mit …«, dann auf das andere tippen.';
+    if (has('summ')) return 'Die Summlinie braucht Zacken. Schau mal genau in deinen eigenen Bauch (Nahaufnahme).';
+    if (!has('klammer')) return 'Unten auf Seite 47 klebt die Summlinie »hmmmmpen«. Zum Abhebeln brauchst du was Dünnes. In der Einstecktasche gibt’s so was.';
+    return 'Hebel die Summlinie unten auf Seite 47 mit der Büroklammer ab.';
+  }
+  return 'Platz, Farbe, Takt: Du hast alles. Schau dir dein Herz an.';
+}
+$('#btnHint').addEventListener('click', () => { if (pending){ pending(); return; } run(() => hint(hintText())); });
+
+/* ================= Speichern ================= */
+const KEY = 'hmpf-kritzelherz-v1';
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify({ scene: S.scene === 'nah' ? S.prev : S.scene, inv: S.inv, f: S.f, sound: S.sound, x: ax })); } catch (e) {}
+}
+function load(){
+  try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.f && SC[d.scene]) return d; } catch (e) {}
+  return null;
+}
+function applySave(d){
+  S = fresh(); S.scene = d.scene; S.prev = d.scene; S.inv = d.inv || []; S.f = d.f; S.f.seen = S.f.seen || {}; S.sound = d.sound !== false;
+  ax = d.x || 230; ay = 0; squash = 1;
+}
+function soundBtn(){ const b = $('#btnSound'); b.textContent = S.sound ? 'Ton: an' : 'Ton: aus'; b.setAttribute('aria-pressed', String(S.sound)); }
+$('#btnSound').addEventListener('click', () => { S.sound = !S.sound; soundBtn(); save(); if (S.sound) sfx.unlock(); });
+
+/* ================= Titel & Ende ================= */
+function showOverlay(mode){
+  const saved = load();
+  $('#btnCont').hidden = mode === 'start' ? !saved : false;
+  $('#btnNew').textContent = mode === 'end' ? 'Nochmal spielen' : 'Neues Spiel';
+  $('#btnCont').textContent = mode === 'end' ? 'Weiter angucken' : 'Weiterspielen';
+  $('#ovEyebrow').textContent = mode === 'end' ? 'Ende' : 'Ein Point-and-Click-Abenteuer in Kugelschreiber';
+  $('#ttl').innerHTML = mode === 'end' ? 'Hmpfs Herz <span>bumst</span> wieder.' : 'Hmpf und das Kritzel<span>herz</span>';
+  $('#ovSub').textContent = mode === 'end'
+    ? 'Danke fürs Spielen. Die Vorlage für dieses Abenteuer ist diese Kulizeichnung von ne, mitten in einem Notizbuch.'
+    : 'Jemand hat Hmpfs Herz zugekritzelt. Hilf ihm, es wieder zum Schlagen zu bringen – mit einer alten Spirale, einem Esel im Eselsohr, einem Kassenbon und sehr viel Hüpfen.';
+  $('#ovHow').hidden = mode === 'end';
+  ovEl.dataset.mode = mode;
+  ovEl.hidden = false;
+  $('#btnNew').focus({ preventScroll: true });
+}
+function closeOverlay(){ ovEl.hidden = true; }
+$('#btnNew').addEventListener('click', () => {
+  stopBeat();
+  const snd = S.sound;
+  S = fresh(); S.sound = snd; ax = 230; ay = 0; squash = 1;
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  sfx.unlock(); closeOverlay(); render(); soundBtn();
+  busy = false; pending = null; capEl.hidden = true; optsEl.hidden = true;
+  run(async () => {
+    await narr('Ein Notizbuch. Seite 47. Kugelschreiber auf Papier.');
+    await narr('Hier wohnt Hmpf. ne hat ihn gezeichnet: Haare, Brille, Ohren, einen großen Bauch voller Zacken. Eine Trense im Mund. Und ein Herz.');
+    await narr('Dann hat der Kuli gezögert. Und das Herz zugekritzelt.');
+    await hm('Hmpf.');
+    await think('Unter meinem Herz steht, was es eigentlich tun sollte: »bumsen«. Bums, bums, bums. Meins macht gar nichts mehr.');
+    await think('Das muss ich reparieren. Irgendwer in diesem Notizbuch weiß bestimmt, wie.');
+    await narr('Tippe auf Dinge, um sie anzusehen, zu nehmen oder zu benutzen. Tippe auf Hmpf für die Nahaufnahme.');
+  });
+});
+$('#btnCont').addEventListener('click', () => {
+  sfx.unlock();
+  const mode = ovEl.dataset.mode;
+  if (mode === 'start'){ const d = load(); if (d) applySave(d); render(); soundBtn(); if (S.f.won) startBeat(), beatSound = false; }
+  closeOverlay();
+});
+$('#btnMenu').addEventListener('click', () => { if (pending || busy) return; showOverlay('menu'); });
+const img = $('#photoImg');
+img.addEventListener('error', () => { $('#photo').hidden = true; });
+if (img.complete && img.naturalWidth === 0) $('#photo').hidden = true;
+
+/* ================= Tinte kocht ================= */
+if (!reduced) setInterval(() => {
+  boilI = (boilI + 1) % 3;
+  const v = `url(#boil${boilI})`;
+  document.querySelectorAll('#svg .ink').forEach(g => g.setAttribute('filter', v));
+}, 160);
+
+/* ================= Start ================= */
+window.claude?.hot?.snapshot?.(() => ({ S, ax, ov: ovEl.hidden ? null : ovEl.dataset.mode }));
+const boot = data => {
+  if (data && data.S && data.S.f){
+    S = data.S; S.f.seen = S.f.seen || {}; ax = data.ax || 230; busy = false; pending = null;
+    if (S.scene === 'nah' && !SC[S.prev]) S.prev = 's47';
+    render(); soundBtn();
+    if (S.f.won){ startBeat(); beatSound = false; }
+    if (data.ov) showOverlay(data.ov); else closeOverlay();
+    return;
+  }
+  const d = load(); if (d) applySave(d);
+  render(); soundBtn(); showOverlay('start');
+};
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+})();
+</script>
+</body>
+</html>
